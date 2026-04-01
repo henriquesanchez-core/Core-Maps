@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CoreMaps — Gerador de Mapas</title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>CoreMaps</h1>
+      <p class="subtitle">Gerador de Mapas do Mentorado</p>
+    </header>
+
+    <form id="mapForm">
+      <!-- 1. Perfil do Cliente -->
+      <section class="form-section">
+        <h2>1. Perfil do Cliente (Instagram)</h2>
+        <div class="field">
+          <label for="clientUsername">@ do Instagram</label>
+          <input type="text" id="clientUsername" name="clientUsername" placeholder="username" required>
+        </div>
+      </section>
+
+      <!-- 2. Perfis de Referência -->
+      <section class="form-section">
+        <h2>2. Perfis de Referência</h2>
+        <div class="field">
+          <label for="referenceProfiles">Links dos perfis (um por linha)</label>
+          <textarea id="referenceProfiles" name="referenceProfiles" rows="4" placeholder="https://instagram.com/perfil1&#10;https://instagram.com/perfil2&#10;@perfil3"></textarea>
+        </div>
+      </section>
+
+      <!-- 3. Termo Viral -->
+      <section class="form-section">
+        <h2>3. Termo Viral</h2>
+        <div class="field">
+          <label for="viralTerm">Termos / Palavras-chave virais (um por linha)</label>
+          <textarea id="viralTerm" name="viralTerm" rows="3" placeholder="Ex: mindset de crescimento&#10;negócio invisível"></textarea>
+        </div>
+      </section>
+
+      <!-- 4. Transcrição da Sessão -->
+      <section class="form-section">
+        <h2>4. Transcrição da Sessão</h2>
+        <div class="field">
+          <label for="transcription">Cole a transcrição completa da call</label>
+          <textarea id="transcription" name="transcription" rows="8" placeholder="Cole aqui a transcrição da sessão de mentoria..."></textarea>
+        </div>
+      </section>
+
+      <!-- 5. Formato Viral -->
+      <section class="form-section">
+        <h2>5. Formato Viral / Insumos</h2>
+        <div class="field">
+          <label for="viralFormat">Insumos para formato viral</label>
+          <textarea id="viralFormat" name="viralFormat" rows="5" placeholder="Cole aqui os insumos do formato viral..."></textarea>
+        </div>
+      </section>
+
+      <div class="actions">
+        <button type="submit" id="btnGenerate" class="btn btn-primary">Gerar Mapa</button>
+      </div>
+    </form>
+
+    <!-- Progress -->
+    <div id="progress" class="progress hidden">
+      <div class="progress-steps">
+        <div class="pstep" id="ps1"><span class="pstep-num">1</span> Instagram</div>
+        <div class="pstep" id="ps2"><span class="pstep-num">2</span> Referências</div>
+        <div class="pstep" id="ps3"><span class="pstep-num">3</span> Extrair Perfil</div>
+        <div class="pstep" id="ps4"><span class="pstep-num">4</span> Narrativa</div>
+        <div class="pstep" id="ps5"><span class="pstep-num">5</span> Plano de Ação</div>
+        <div class="pstep" id="ps6"><span class="pstep-num">6</span> Mapa Final</div>
+      </div>
+      <p id="progressMsg" class="progress-msg">Iniciando...</p>
+    </div>
+
+    <!-- Result -->
+    <div id="result" class="result hidden">
+      <h2>Mapa Gerado!</h2>
+      <a id="resultLink" href="#" target="_blank" class="btn btn-primary">Abrir Mapa</a>
+    </div>
+
+    <% if (existingMaps.length > 0) { %>
+    <section class="existing-maps">
+      <h2>Mapas Existentes</h2>
+      <ul>
+        <% existingMaps.forEach(function(map) { %>
+          <li><a href="/maps/<%= map %>.html" target="_blank">@<%= map %></a></li>
+        <% }); %>
+      </ul>
+    </section>
+    <% } %>
+  </div>
+
+  <script>
+    document.getElementById('mapForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('btnGenerate');
+      const progress = document.getElementById('progress');
+      const progressMsg = document.getElementById('progressMsg');
+
+      btn.disabled = true;
+      btn.textContent = 'Gerando...';
+      progress.classList.remove('hidden');
+      document.getElementById('result').classList.add('hidden');
+
+      // Reset steps
+      for (let i = 1; i <= 6; i++) {
+        document.getElementById('ps' + i).className = 'pstep';
+      }
+
+      const payload = {
+        clientUsername: document.getElementById('clientUsername').value.trim(),
+        referenceProfiles: document.getElementById('referenceProfiles').value.trim(),
+        viralTerm: document.getElementById('viralTerm').value.trim(),
+        transcription: document.getElementById('transcription').value.trim(),
+        viralFormat: document.getElementById('viralFormat').value.trim(),
+      };
+
+      try {
+        const response = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const data = JSON.parse(line.slice(6));
+
+            if (data.type === 'progress') {
+              progressMsg.textContent = data.message;
+              const stepEl = document.getElementById('ps' + data.step);
+              if (stepEl) {
+                // Mark previous as done
+                for (let i = 1; i < data.step; i++) {
+                  document.getElementById('ps' + i).className = 'pstep done';
+                }
+                stepEl.className = 'pstep active';
+              }
+            }
+
+            if (data.type === 'done') {
+              // Mark all done
+              for (let i = 1; i <= 6; i++) {
+                document.getElementById('ps' + i).className = 'pstep done';
+              }
+              progressMsg.textContent = 'Concluído!';
+              const result = document.getElementById('result');
+              result.classList.remove('hidden');
+              const link = document.getElementById('resultLink');
+              link.href = data.url;
+              link.textContent = 'Abrir mapa de @' + data.username;
+            }
+
+            if (data.type === 'error') {
+              progressMsg.textContent = 'Erro: ' + data.message;
+            }
+          }
+        }
+      } catch (err) {
+        progressMsg.textContent = 'Erro: ' + err.message;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Gerar Mapa';
+      }
+    });
+  </script>
+</body>
+</html>
