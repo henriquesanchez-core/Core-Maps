@@ -1,21 +1,33 @@
 {
-  "name": "coremaps",
-  "version": "1.0.0",
-  "description": "",
-  "main": "server.js",
+  "name": "temp-app",
+  "version": "0.1.0",
+  "private": true,
   "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.81.0",
+    "@anthropic-ai/sdk": "^0.82.0",
+    "@supabase/supabase-js": "^2.101.1",
+    "@tailwindcss/typography": "^0.5.19",
     "apify-client": "^2.22.3",
-    "dotenv": "^17.3.1",
-    "ejs": "^5.0.1",
-    "express": "^5.2.1"
+    "lucide-react": "^1.7.0",
+    "next": "16.2.2",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.2",
+    "tailwindcss": "^4",
+    "typescript": "^5"
   }
 }
