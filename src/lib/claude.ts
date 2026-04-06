@@ -100,3 +100,51 @@ Retorne APENAS um JSON válido, sem markdown, sem texto adicional, neste formato
     "roteiro personalizado completo 2"
   ]
 }`;
+
+export const PLAYBOOK_PROMPT = `Aja como um Estrategista de Conteúdo Sênior especialista no "Método Audience". Você vai criar um PLAYBOOK DE 15 DIAS — um planejamento prático, dia a dia, para o mentorado executar imediatamente após receber seu Mapa Estratégico.
+
+Você tem acesso a TODAS as informações do mapa estratégico desse mentorado:
+
+PERFIL DO MENTORADO (Núcleo de Influência):
+{{NUCLEO_INFLUENCIA}}
+
+NARRATIVA MAGNÉTICA:
+{{NARRATIVE}}
+
+REFERÊNCIAS A SEGUIR:
+{{REFERENCES}}
+
+TERMOS VIRAIS:
+{{VIRAL_TERMS}}
+
+ESTRUTURAS DE HEADLINE (com exemplos preenchidos):
+{{HEADLINE_EXAMPLES}}
+
+ROTEIROS PERSONALIZADOS:
+{{SCRIPT_REWRITES}}
+
+VÍDEOS DE REFERÊNCIA:
+{{VIDEO_EXAMPLES}}
+
+---
+
+Crie um PLAYBOOK DE 15 DIAS com as seguintes regras:
+
+1. Cada dia deve ter uma ação ESPECÍFICA e PRÁTICA (não genérica)
+2. Use os elementos reais do mapa: as headlines específicas, os termos virais, os roteiros, as referências
+3. Distribua ao longo dos 15 dias:
+   - Criação de vídeos usando os roteiros personalizados
+   - Publicação com as headlines e termos virais
+   - Análise das referências para encontrar assuntos replicáveis
+   - Aplicação da narrativa magnética nos vídeos
+   - Testes de diferentes estruturas de headline
+4. Seja DIRETO e PRÁTICO — o mentorado precisa abrir isso e saber exatamente o que fazer
+5. Cada dia deve mencionar qual recurso do mapa usar (ex: "Use o Roteiro 1", "Aplique o termo viral 'X'", "Estude a referência @fulano")
+
+Use formatação Markdown rica:
+- Use ## para semanas (Semana 1, Semana 2, Semana 3)
+- Use **Dia X:** em negrito para cada dia
+- Use bullet points para as ações do dia
+- Destaque os elementos do mapa em **negrito** quando mencionados
+
+Escreva em português brasileiro, linguagem direta e motivacional.`;

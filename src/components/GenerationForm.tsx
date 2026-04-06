@@ -22,6 +22,7 @@ export function GenerationForm() {
     "Extrair Perfil",
     "Narrativa",
     "Exemplos IA",
+    "Playbook",
     "Mapa Final"
   ]
 
@@ -72,7 +73,7 @@ export function GenerationForm() {
               setProgressMsg(data.message)
               setCurrentStep(data.step)
             } else if (data.type === "done") {
-              setCurrentStep(6)
+              setCurrentStep(7)
               setProgressMsg("Concluído!")
               setResultId(data.id)
             } else if (data.type === "error") {

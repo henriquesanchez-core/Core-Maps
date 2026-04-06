@@ -4,7 +4,7 @@ import { useState, useCallback } from "react"
 import Link from "next/link"
 import {
   ArrowLeft, User, Flame, ExternalLink, Play, Type, FileText,
-  Save, Loader2, Download, ChevronDown, ChevronUp,
+  Save, Loader2, Download, ChevronDown, ChevronUp, CalendarDays,
 } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
@@ -47,6 +47,7 @@ export function MapView({ mapData }: { mapData: MapData }) {
             headline_examples: headlineExamples,
             viral_term_examples: viralTermExamples,
             script_rewrites: scriptRewrites,
+            playbook: mapData.action_plan?.playbook || null,
           },
         }),
       })
@@ -326,16 +327,22 @@ export function MapView({ mapData }: { mapData: MapData }) {
                 </p>
                 <div className="space-y-4">
                   {viralTermExamples.map((item, i) => (
-                    <div key={i} className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-5">
-                      <span className="inline-flex items-center gap-1.5 bg-orange-500/10 border border-orange-500/20 text-orange-300 rounded-full px-3 py-1 text-xs font-medium mb-3">
-                        <Flame className="w-3 h-3" />
-                        {item.viral_term}
-                      </span>
-                      <EditableField
-                        value={item.headline_example}
-                        onChange={(val) => updateViralTerm(i, val)}
-                        className="text-sm text-zinc-100 font-medium"
-                      />
+                    <div key={i} className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-5 space-y-3">
+                      <div>
+                        <p className="text-[11px] text-zinc-600 uppercase tracking-widest mb-1.5">Termo Viral</p>
+                        <span className="inline-flex items-center gap-1.5 bg-orange-500/10 border border-orange-500/20 text-orange-300 rounded-full px-4 py-1.5 text-sm font-medium">
+                          <Flame className="w-3.5 h-3.5" />
+                          {item.viral_term}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-[11px] text-[var(--gold)] uppercase tracking-widest mb-1.5">Exemplo de como aplicar na headline</p>
+                        <EditableField
+                          value={item.headline_example}
+                          onChange={(val) => updateViralTerm(i, val)}
+                          className="text-sm text-zinc-100 font-medium"
+                        />
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -416,6 +423,34 @@ export function MapView({ mapData }: { mapData: MapData }) {
                   </div>
                 ))
               )}
+            </div>
+          </section>
+        )}
+
+        {/* ── SECTION 7: Playbook de 15 Dias ── */}
+        {mapData.action_plan?.playbook && (
+          <section className="animate-fade-up" style={{ animationDelay: "0.4s" }}>
+            <div className="flex items-center gap-3 mb-8">
+              <span className="section-number">{++sectionIndex}</span>
+              <h2 className="text-xl font-bold text-white tracking-tight">Playbook de 15 Dias</h2>
+              <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent" />
+            </div>
+
+            <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-8 md:p-10">
+              <div className="flex items-center gap-3 mb-6 pb-4 border-b border-white/[0.06]">
+                <div className="w-10 h-10 rounded-xl bg-[var(--gold)]/10 flex items-center justify-center">
+                  <CalendarDays className="w-5 h-5 text-[var(--gold)]" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-white">Seu planejamento personalizado</p>
+                  <p className="text-xs text-zinc-500">Siga este playbook dia a dia para máximo resultado</p>
+                </div>
+              </div>
+              <div className="prose prose-invert prose-premium max-w-none text-zinc-300 leading-relaxed">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {mapData.action_plan.playbook}
+                </ReactMarkdown>
+              </div>
             </div>
           </section>
         )}

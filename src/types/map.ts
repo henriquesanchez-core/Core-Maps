@@ -28,6 +28,7 @@ export interface ActionPlan {
   headline_examples: HeadlineExample[]
   viral_term_examples: ViralTermExample[]
   script_rewrites: string[]
+  playbook?: string | null
 }
 
 export interface MapData {
