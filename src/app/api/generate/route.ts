@@ -22,7 +22,15 @@ function formatNucleo(profile: any) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { clientUsername, referenceProfiles, viralTerm, transcription, viralFormat } = body;
+    const {
+      clientUsername,
+      referenceProfiles,
+      transcription,
+      viralTerms,
+      videoExamples,
+      headlineExamples,
+      scriptExamples,
+    } = body;
 
     if (!clientUsername) {
       return NextResponse.json({ error: 'Username do cliente é obrigatório' }, { status: 400 });
@@ -99,14 +107,21 @@ export async function POST(req: Request) {
           // STEP 5: Save to DB
           sendProgress(5, 'Salvando o Mapa Final no banco...');
 
+          const viralTermsArray = Array.isArray(viralTerms) ? viralTerms : [];
+          const contentInputs = {
+            videoExamples: Array.isArray(videoExamples) ? videoExamples : [],
+            headlineExamples: Array.isArray(headlineExamples) ? headlineExamples : [],
+            scriptExamples: Array.isArray(scriptExamples) ? scriptExamples : [],
+          };
+
           const { data: inserted, error: dbError } = await supabase
             .from('maps')
             .insert({
               client_username: cleanUsername,
               reference_profiles: referenceProfiles || null,
-              viral_term: viralTerm || null,
+              viral_term: JSON.stringify(viralTermsArray),
               transcription: transcription || null,
-              viral_format: viralFormat || null,
+              viral_format: JSON.stringify(contentInputs),
               client_data: clientData,
               references_data: referencesData.length > 0 ? referencesData : null,
               extracted_profile: extractedProfile || null,

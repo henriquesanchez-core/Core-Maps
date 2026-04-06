@@ -2,12 +2,19 @@
 
 import { useState } from "react"
 import { Loader2, Plus, ArrowRight } from "lucide-react"
+import { TagInput } from "./TagInput"
 
 export function GenerationForm() {
   const [loading, setLoading] = useState(false)
   const [progressMsg, setProgressMsg] = useState("")
   const [currentStep, setCurrentStep] = useState(0)
   const [resultId, setResultId] = useState<string | null>(null)
+
+  // Tag-based states
+  const [viralTerms, setViralTerms] = useState<string[]>([])
+  const [videoExamples, setVideoExamples] = useState<string[]>([])
+  const [headlineExamples, setHeadlineExamples] = useState<string[]>([])
+  const [scriptExamples, setScriptExamples] = useState<string[]>([])
 
   const steps = [
     "Instagram",
@@ -28,9 +35,11 @@ export function GenerationForm() {
     const payload = {
       clientUsername: formData.get("clientUsername"),
       referenceProfiles: formData.get("referenceProfiles"),
-      viralTerm: formData.get("viralTerm"),
       transcription: formData.get("transcription"),
-      viralFormat: formData.get("viralFormat"),
+      viralTerms,
+      videoExamples,
+      headlineExamples,
+      scriptExamples,
     }
 
     try {
@@ -87,62 +96,83 @@ export function GenerationForm() {
       </h2>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-zinc-400">@ do Instagram do Cliente</label>
-            <input 
-              required
-              name="clientUsername"
-              type="text" 
-              placeholder="ex: htsanchez" 
-              className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-mono"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-zinc-400">Termo Viral</label>
-            <input 
-              name="viralTerm"
-              type="text" 
-              placeholder="ex: negócio invisível" 
-              className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-            />
-          </div>
+        {/* Row 1: Instagram */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-zinc-400">@ do Instagram do Cliente</label>
+          <input
+            required
+            name="clientUsername"
+            type="text"
+            placeholder="ex: htsanchez"
+            className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-mono"
+          />
         </div>
 
+        {/* Perfis de Referência */}
         <div className="space-y-2">
           <label className="text-sm font-medium text-zinc-400">Perfis de Referência (1 por linha)</label>
-          <textarea 
+          <textarea
             name="referenceProfiles"
             rows={3}
-            placeholder="https://instagram.com/ref1..." 
+            placeholder="https://instagram.com/ref1..."
             className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
           />
         </div>
 
+        {/* Transcrição */}
         <div className="space-y-2">
           <label className="text-sm font-medium text-zinc-400">Transcrição da Call de Diagnóstico</label>
-          <textarea 
+          <textarea
             name="transcription"
             rows={6}
-            placeholder="Cole aqui a transcrição da chamada para a extração do núcleo de influência..." 
+            placeholder="Cole aqui a transcrição da chamada para a extração do núcleo de influência..."
             className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all resize-y"
           />
         </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-zinc-400">Formato Viral / Insumos Adicionais</label>
-          <textarea 
-            name="viralFormat"
-            rows={3}
-            placeholder="Detalhes ou inspiração para o roteiro..." 
-            className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-          />
+        {/* Divider */}
+        <div className="border-t border-zinc-800 pt-6">
+          <p className="text-xs text-zinc-500 uppercase tracking-widest mb-4">Insumos de Conteúdo</p>
         </div>
 
-        <button 
+        {/* Termos Virais - tag input */}
+        <TagInput
+          label="Termos Virais"
+          placeholder="Digite um termo e pressione Enter..."
+          tags={viralTerms}
+          onChange={setViralTerms}
+        />
+
+        {/* Exemplos de Vídeo */}
+        <TagInput
+          label="Exemplos de Vídeo para Modelar"
+          placeholder="Cole o link do vídeo e pressione Enter..."
+          tags={videoExamples}
+          onChange={setVideoExamples}
+        />
+
+        {/* Headlines */}
+        <TagInput
+          label="Exemplos de Headline para Modelar"
+          placeholder="Digite a headline e pressione Enter..."
+          tags={headlineExamples}
+          onChange={setHeadlineExamples}
+          minItems={5}
+        />
+
+        {/* Roteiros */}
+        <TagInput
+          label="Exemplos de Roteiro para Modelar"
+          placeholder="Descreva a estrutura do roteiro e clique +"
+          tags={scriptExamples}
+          onChange={setScriptExamples}
+          minItems={2}
+          multiline
+        />
+
+        <button
           disabled={loading}
-          type="submit" 
+          type="submit"
           className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-medium py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all cursor-pointer flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? (
@@ -152,7 +182,7 @@ export function GenerationForm() {
             </>
           ) : (
             <>
-              Gerar CoreMap Master
+              Gerar CoreMap
             </>
           )}
         </button>

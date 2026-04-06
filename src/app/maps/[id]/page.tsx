@@ -1,10 +1,16 @@
 import { supabase } from "@/lib/supabase"
 import Link from "next/link"
-import { ArrowLeft, User, Flame, ExternalLink } from "lucide-react"
+import { ArrowLeft, User, Flame, ExternalLink, Play, Type, FileText } from "lucide-react"
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
 export const revalidate = 0;
+
+function parseJsonSafe(str: any, fallback: any = null) {
+  if (!str) return fallback
+  if (typeof str !== 'string') return str
+  try { return JSON.parse(str) } catch { return fallback }
+}
 
 export default async function MapPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -27,6 +33,18 @@ export default async function MapPage({ params }: { params: Promise<{ id: string
   const profile = map.extracted_profile || {}
   const clientData = map.client_data || {}
   const referencesData = map.references_data || []
+
+  // Parse viral terms (can be JSON array or plain string for backward compat)
+  const viralTermsRaw = parseJsonSafe(map.viral_term, null)
+  const viralTerms: string[] = Array.isArray(viralTermsRaw)
+    ? viralTermsRaw
+    : (map.viral_term ? [map.viral_term] : [])
+
+  // Parse content inputs
+  const contentInputs = parseJsonSafe(map.viral_format, {})
+  const videoExamples: string[] = contentInputs?.videoExamples || []
+  const headlineExamples: string[] = contentInputs?.headlineExamples || []
+  const scriptExamples: string[] = contentInputs?.scriptExamples || []
 
   const nucleoFields = [
     { label: "Especialidade", value: profile.especialidade, color: "text-white" },
@@ -64,7 +82,6 @@ export default async function MapPage({ params }: { params: Promise<{ id: string
 
         {/* ── HERO: Client Profile ── */}
         <section className="flex flex-col items-center text-center space-y-6 animate-fade-up">
-          {/* Profile Photo with animated ring */}
           <div className="profile-ring w-[120px] h-[120px]">
             {clientData.profilePicUrl ? (
               <img
@@ -105,7 +122,6 @@ export default async function MapPage({ params }: { params: Promise<{ id: string
 
           <div className="premium-border rounded-2xl">
             <div className="bg-[#0a0a0f] rounded-2xl p-8 space-y-6">
-              {/* Nome destaque */}
               {profile.nome && (
                 <div className="text-center pb-6 border-b border-white/[0.06]">
                   <p className="text-xs text-zinc-600 uppercase tracking-widest mb-2">Nome</p>
@@ -172,7 +188,7 @@ export default async function MapPage({ params }: { params: Promise<{ id: string
         )}
 
         {/* ── SECTION: Termos Virais ── */}
-        {map.viral_term && (
+        {viralTerms.length > 0 && (
           <section className="animate-fade-up" style={{ animationDelay: '0.3s' }}>
             <div className="flex items-center gap-3 mb-8">
               <span className="section-number">{++sectionIndex}</span>
@@ -180,18 +196,103 @@ export default async function MapPage({ params }: { params: Promise<{ id: string
               <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent" />
             </div>
 
-            <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-8">
-              <div className="flex items-start gap-4">
-                <Flame className="w-6 h-6 text-orange-400 shrink-0 mt-0.5" />
-                <p className="text-lg text-zinc-200 leading-relaxed font-medium">{map.viral_term}</p>
-              </div>
+            <div className="flex flex-wrap gap-3">
+              {viralTerms.map((term: string, i: number) => (
+                <span
+                  key={i}
+                  className="inline-flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 text-orange-300 rounded-full px-5 py-2.5 text-sm font-medium"
+                >
+                  <Flame className="w-3.5 h-3.5" />
+                  {term}
+                </span>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ── SECTION: Exemplos de Vídeo ── */}
+        {videoExamples.length > 0 && (
+          <section className="animate-fade-up" style={{ animationDelay: '0.35s' }}>
+            <div className="flex items-center gap-3 mb-8">
+              <span className="section-number">{++sectionIndex}</span>
+              <h2 className="text-xl font-bold text-white tracking-tight">Vídeos de Referência</h2>
+              <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent" />
+            </div>
+
+            <div className="space-y-3">
+              {videoExamples.map((url: string, i: number) => (
+                <a
+                  key={i}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex items-center gap-3 bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] hover:border-[var(--gold)]/30 rounded-xl p-4 transition-all duration-300"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0">
+                    <Play className="w-4 h-4 text-purple-400" />
+                  </div>
+                  <p className="text-sm text-zinc-300 font-mono truncate flex-1">{url}</p>
+                  <ExternalLink className="w-4 h-4 text-zinc-700 group-hover:text-[var(--gold)] transition-colors shrink-0" />
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ── SECTION: Headlines ── */}
+        {headlineExamples.length > 0 && (
+          <section className="animate-fade-up" style={{ animationDelay: '0.4s' }}>
+            <div className="flex items-center gap-3 mb-8">
+              <span className="section-number">{++sectionIndex}</span>
+              <h2 className="text-xl font-bold text-white tracking-tight">Headlines para Modelar</h2>
+              <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent" />
+            </div>
+
+            <div className="space-y-3">
+              {headlineExamples.map((headline: string, i: number) => (
+                <div
+                  key={i}
+                  className="flex items-start gap-3 bg-white/[0.02] border border-white/[0.06] rounded-xl p-4"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+                    <Type className="w-4 h-4 text-blue-400" />
+                  </div>
+                  <p className="text-sm text-zinc-200 leading-relaxed pt-1">{headline}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ── SECTION: Roteiros ── */}
+        {scriptExamples.length > 0 && (
+          <section className="animate-fade-up" style={{ animationDelay: '0.45s' }}>
+            <div className="flex items-center gap-3 mb-8">
+              <span className="section-number">{++sectionIndex}</span>
+              <h2 className="text-xl font-bold text-white tracking-tight">Roteiros para Modelar</h2>
+              <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent" />
+            </div>
+
+            <div className="space-y-4">
+              {scriptExamples.map((script: string, i: number) => (
+                <div
+                  key={i}
+                  className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-6"
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <FileText className="w-4 h-4 text-emerald-400" />
+                    <span className="text-xs text-zinc-500 uppercase tracking-widest">Roteiro {i + 1}</span>
+                  </div>
+                  <p className="text-sm text-zinc-200 leading-relaxed whitespace-pre-wrap">{script}</p>
+                </div>
+              ))}
             </div>
           </section>
         )}
 
         {/* ── SECTION: Narrativa Magnética ── */}
         {map.narrative && (
-          <section className="animate-fade-up" style={{ animationDelay: '0.4s' }}>
+          <section className="animate-fade-up" style={{ animationDelay: '0.5s' }}>
             <div className="flex items-center gap-3 mb-8">
               <span className="section-number">{++sectionIndex}</span>
               <h2 className="text-xl font-bold text-white tracking-tight">Narrativa Magnética</h2>
