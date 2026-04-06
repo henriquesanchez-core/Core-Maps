@@ -5,6 +5,7 @@ import {
   callClaude,
   EXTRACT_PROFILE_PROMPT,
   NARRATIVE_PROMPT,
+  HEADLINE_EXAMPLES_PROMPT,
 } from '@/lib/claude';
 
 export const dynamic = 'force-dynamic';
@@ -104,14 +105,51 @@ export async function POST(req: Request) {
             sendProgress(4, 'Sem perfil extraído. Pulando narrativa.');
           }
 
-          // STEP 5: Save to DB
-          sendProgress(5, 'Salvando o Mapa Final no banco...');
-
+          // STEP 5: Generate headline/viral/script examples with AI
           const viralTermsArray = Array.isArray(viralTerms) ? viralTerms : [];
+          const headlineExamplesArray = Array.isArray(headlineExamples) ? headlineExamples : [];
+          const scriptExamplesArray = Array.isArray(scriptExamples) ? scriptExamples : [];
+
+          let actionPlan = null;
+          const hasInputs = extractedProfile && (headlineExamplesArray.length > 0 || viralTermsArray.length > 0 || scriptExamplesArray.length > 0);
+
+          if (hasInputs) {
+            sendProgress(5, 'Gerando exemplos personalizados com IA...');
+            const nucleoInfo = formatNucleo(extractedProfile);
+            const structuresList = headlineExamplesArray.map((h: string, i: number) => `${i + 1}. ${h}`).join('\n');
+            const termsList = viralTermsArray.map((t: string, i: number) => `${i + 1}. ${t}`).join('\n');
+            const scriptsList = scriptExamplesArray.map((s: string, i: number) => `--- Roteiro ${i + 1} ---\n${s}`).join('\n\n');
+
+            const prompt = HEADLINE_EXAMPLES_PROMPT
+              .replace('{{NUCLEO_INFLUENCIA}}', nucleoInfo)
+              .replace('{{HEADLINE_STRUCTURES}}', structuresList || 'Nenhuma estrutura fornecida')
+              .replace('{{VIRAL_TERMS}}', termsList || 'Nenhum termo viral fornecido')
+              .replace('{{SCRIPT_STRUCTURES}}', scriptsList || 'Nenhum roteiro fornecido');
+
+            const result = await callClaude(prompt);
+            const cleaned = result.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+
+            try {
+              actionPlan = JSON.parse(cleaned);
+            } catch (e) {
+              console.error('[Generate] Failed to parse headline examples:', cleaned);
+              actionPlan = {
+                headline_examples: headlineExamplesArray.map((h: string) => ({ structure: h, filled_example: '' })),
+                viral_term_examples: viralTermsArray.map((t: string) => ({ viral_term: t, headline_example: '' })),
+                script_rewrites: [],
+              };
+            }
+          } else {
+            sendProgress(5, 'Sem insumos para exemplos. Pulando...');
+          }
+
+          // STEP 6: Save to DB
+          sendProgress(6, 'Salvando o Mapa Final no banco...');
+
           const contentInputs = {
             videoExamples: Array.isArray(videoExamples) ? videoExamples : [],
-            headlineExamples: Array.isArray(headlineExamples) ? headlineExamples : [],
-            scriptExamples: Array.isArray(scriptExamples) ? scriptExamples : [],
+            headlineExamples: headlineExamplesArray,
+            scriptExamples: scriptExamplesArray,
           };
 
           const { data: inserted, error: dbError } = await supabase
@@ -126,14 +164,14 @@ export async function POST(req: Request) {
               references_data: referencesData.length > 0 ? referencesData : null,
               extracted_profile: extractedProfile || null,
               narrative: narrative || null,
-              action_plan: null
+              action_plan: actionPlan ? JSON.stringify(actionPlan) : null,
             })
             .select()
             .single();
 
           if (dbError) {
             console.log("DB ERROR", dbError)
-            sendProgress(5, 'Aviso: Erro ao salvar no banco, mas a geração concluiu.');
+            sendProgress(6, 'Aviso: Erro ao salvar no banco, mas a geração concluiu.');
             sendEvent({ type: 'done', id: null, username: cleanUsername });
           } else {
             sendEvent({ type: 'done', id: inserted.id, username: cleanUsername });

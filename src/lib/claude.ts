@@ -53,24 +53,50 @@ Logo após a narrativa, crie a minha apresentação de impacto. Ela deve soar hu
 
 A linguagem deve ser natural, falada, sem parecer robô.`;
 
-export const ACTION_PLAN_PROMPT = `Aja como um Estrategista de Conteúdo Sênior especialista no "Método Audience". Com base nas informações abaixo, crie um Plano de Ação detalhado e prático para o mentorado.
+export const HEADLINE_EXAMPLES_PROMPT = `Aja como um Copywriter Sênior especialista no "Método Audience" de headlines virais para Instagram/Reels.
+
+Você receberá o perfil do mentorado e as estruturas de headline que ele deve modelar. Sua missão é PREENCHER cada estrutura com o conteúdo real do nicho desse mentorado, criando exemplos prontos para uso.
 
 PERFIL DO MENTORADO:
 {{NUCLEO_INFLUENCIA}}
 
-TERMO VIRAL: {{VIRAL_TERM}}
+---
 
-FORMATO VIRAL / INSUMOS:
-{{VIRAL_FORMAT}}
+PARTE 1: ESTRUTURAS DE HEADLINE PREENCHIDAS
+Para cada estrutura abaixo, crie um exemplo CONCRETO e PRONTO PARA USO aplicado ao nicho do mentorado. O exemplo deve ser uma headline completa, curta e de alto impacto.
 
-NARRATIVA GERADA:
-{{NARRATIVE}}
+Estruturas:
+{{HEADLINE_STRUCTURES}}
 
-Crie um plano de ação com:
-1. **Posicionamento de Perfil** — Bio, destaques e identidade visual
-2. **Estratégia de Conteúdo Semanal** — Frequência e pilares
-3. **Roteiro Base para Reels** — Usando a narrativa magnética gerada
-4. **Estratégia de Crescimento** — Como usar o termo viral e referências
-5. **Próximos Passos** — 5 ações imediatas
+---
 
-Seja prático, direto e com linguagem acessível. Use formatação em Markdown bem rica para a leitura.`;
+PARTE 2: HEADLINES COM TERMOS VIRAIS
+Para cada termo viral abaixo, crie uma headline matadora que combine esse termo com uma das estruturas acima, aplicada ao nicho do mentorado. A headline deve ser curta, de alto impacto e pronta para usar em Reels.
+
+Termos Virais:
+{{VIRAL_TERMS}}
+
+---
+
+PARTE 3: ROTEIROS PERSONALIZADOS
+Para cada roteiro/estrutura abaixo, crie uma versão PERSONALIZADA e PRONTA PARA USO para o mentorado, usando seu nicho, público, dor e linguagem natural. Mantenha a estrutura do roteiro original mas adapte todo o conteúdo para o nicho do mentorado.
+
+Roteiros:
+{{SCRIPT_STRUCTURES}}
+
+---
+
+Retorne APENAS um JSON válido, sem markdown, sem texto adicional, neste formato exato:
+
+{
+  "headline_examples": [
+    { "structure": "a estrutura original exata", "filled_example": "o exemplo preenchido" }
+  ],
+  "viral_term_examples": [
+    { "viral_term": "o termo viral exato", "headline_example": "a headline criada" }
+  ],
+  "script_rewrites": [
+    "roteiro personalizado completo 1",
+    "roteiro personalizado completo 2"
+  ]
+}`;

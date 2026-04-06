@@ -166,3 +166,79 @@ body {
 .prose-premium h3 {
   color: var(--gold-light);
 }
+
+/* ═══════════════════════════════════════════════ */
+/* Print / PDF Export Styles                       */
+/* ═══════════════════════════════════════════════ */
+@media print {
+  @page {
+    size: A4;
+    margin: 1.5cm;
+  }
+
+  /* Force dark background in print */
+  html, body {
+    background: #050507 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide interactive/non-printable elements */
+  .no-print,
+  .edit-controls,
+  .noise-overlay {
+    display: none !important;
+  }
+
+  /* Freeze all animations to static state */
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  /* Gold shimmer → static gold text */
+  .gold-shimmer {
+    background: linear-gradient(110deg, var(--gold-dark), var(--gold), var(--gold-light)) !important;
+    background-size: 100% 100% !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+  }
+
+  /* Premium border → solid gold line */
+  .premium-border::before {
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-light)) !important;
+  }
+
+  /* Profile ring → static gold ring */
+  .profile-ring::before {
+    background: conic-gradient(from 0deg, var(--gold), var(--gold-light), var(--gold)) !important;
+  }
+
+  /* Ambient glow → hidden in print */
+  .glow-ambient {
+    display: none !important;
+  }
+
+  /* Ensure sections don't break across pages */
+  section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Ensure all fade-up elements are visible */
+  .animate-fade-up {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /* Remove sticky header positioning */
+  header.sticky {
+    position: relative !important;
+  }
+
+  /* Ensure images print */
+  img {
+    max-width: 100% !important;
+  }
+}
