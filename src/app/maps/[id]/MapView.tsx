@@ -6,11 +6,11 @@ import Link from "next/link"
 import {
   ArrowLeft, User, Flame, ExternalLink, Play, Type, FileText,
   Save, Loader2, ChevronDown, ChevronUp, CalendarDays, Target,
-  Users, Sparkles, Share2, Check,
+  Users, Sparkles, Share2, Check, Volume2,
 } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
-import type { MapData, HeadlineExample, ViralTermExample } from "@/types/map"
+import type { MapData, HeadlineExample, ViralTermExample, TabAudios } from "@/types/map"
 import { EditableField } from "./EditableField"
 import { EditableScript } from "./EditableScript"
 
@@ -25,7 +25,17 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]["id"]
 
-export function MapView({ mapData }: { mapData: MapData }) {
+function TabAudioPlayer({ url }: { url: string }) {
+  return (
+    <div className="flex items-center gap-3 bg-[var(--gold)]/[0.06] border border-[var(--gold)]/15 rounded-xl px-4 py-3 mb-6">
+      <Volume2 className="w-4 h-4 text-[var(--gold)] shrink-0" />
+      <span className="text-xs text-[var(--gold)] font-medium whitespace-nowrap">Ouça a explicação</span>
+      <audio src={url} controls className="h-8 flex-1 min-w-0" />
+    </div>
+  )
+}
+
+export function MapView({ mapData, tabAudios = {} }: { mapData: MapData; tabAudios?: TabAudios }) {
   const searchParams = useSearchParams()
   const viewOnly = searchParams.get("v") === "1"
 
@@ -203,6 +213,7 @@ export function MapView({ mapData }: { mapData: MapData }) {
         {/* ═══ TAB: Núcleo de Influência ═══ */}
         {activeTab === "nucleo" && (
           <div className="space-y-12 animate-fade-up">
+            {tabAudios.nucleo && <TabAudioPlayer url={tabAudios.nucleo} />}
             {/* Núcleo de Influência */}
             {profile && (
               <section>
@@ -258,6 +269,7 @@ export function MapView({ mapData }: { mapData: MapData }) {
         {/* ═══ TAB: Termos Virais ═══ */}
         {activeTab === "virais" && (
           <div className="space-y-10 animate-fade-up">
+            {tabAudios.virais && <TabAudioPlayer url={tabAudios.virais} />}
             {/* Termos Virais */}
             {(mapData.viral_terms.length > 0 || viralTermExamples.length > 0) ? (
               <>
@@ -323,6 +335,7 @@ export function MapView({ mapData }: { mapData: MapData }) {
         {/* ═══ TAB: Referências ═══ */}
         {activeTab === "referencias" && (
           <div className="space-y-10 animate-fade-up">
+            {tabAudios.referencias && <TabAudioPlayer url={tabAudios.referencias} />}
             {/* Perfis de Referência */}
             {mapData.references_data.length > 0 && (
               <section>
@@ -402,6 +415,7 @@ export function MapView({ mapData }: { mapData: MapData }) {
         {/* ═══ TAB: Headlines ═══ */}
         {activeTab === "headlines" && (
           <div className="space-y-10 animate-fade-up">
+            {tabAudios.headlines && <TabAudioPlayer url={tabAudios.headlines} />}
             {headlineExamples.length > 0 ? (
               <section>
                 <h2 className="text-xl font-bold text-white tracking-tight mb-6 flex items-center gap-3">
@@ -466,6 +480,7 @@ export function MapView({ mapData }: { mapData: MapData }) {
         {/* ═══ TAB: Roteiro ═══ */}
         {activeTab === "roteiro" && (
           <div className="space-y-10 animate-fade-up">
+            {tabAudios.roteiro && <TabAudioPlayer url={tabAudios.roteiro} />}
             {mapData.script_examples.length > 0 ? (
               <section>
                 <h2 className="text-xl font-bold text-white tracking-tight mb-6 flex items-center gap-3">
@@ -549,6 +564,7 @@ export function MapView({ mapData }: { mapData: MapData }) {
         {/* ═══ TAB: Próximos Passos (Playbook) ═══ */}
         {activeTab === "playbook" && (
           <div className="animate-fade-up">
+            {tabAudios.playbook && <TabAudioPlayer url={tabAudios.playbook} />}
             {mapData.action_plan?.playbook ? (
               <section>
                 <h2 className="text-xl font-bold text-white tracking-tight mb-6 flex items-center gap-3">

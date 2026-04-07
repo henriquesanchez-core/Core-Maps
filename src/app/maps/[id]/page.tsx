@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase"
 import Link from "next/link"
 import type { Metadata } from "next"
-import type { MapData } from "@/types/map"
+import type { MapData, TabAudios } from "@/types/map"
 import { MapView } from "./MapView"
 
 export const revalidate = 0;
@@ -73,5 +73,12 @@ export default async function MapPage({ params }: { params: Promise<{ id: string
     action_plan: actionPlan,
   }
 
-  return <MapView mapData={mapData} />
+  // Fetch tab audios
+  const { data: audioRows } = await supabase.from('tab_audios').select('tab_id, audio_url')
+  const tabAudios: TabAudios = {}
+  for (const row of audioRows || []) {
+    tabAudios[row.tab_id] = row.audio_url
+  }
+
+  return <MapView mapData={mapData} tabAudios={tabAudios} />
 }

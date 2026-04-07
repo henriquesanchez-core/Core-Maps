@@ -1,6 +1,6 @@
 import { supabase } from "@/lib/supabase"
 import { GenerationForm } from "@/components/GenerationForm"
-import { Map, Zap } from "lucide-react"
+import { Map, Zap, Settings } from "lucide-react"
 import Link from "next/link"
 
 export const revalidate = 0; // Disable cache so Dashboard loads freshest.
@@ -26,6 +26,13 @@ export default async function Home() {
               Painel Diário para Estrategistas da Equipe.
             </p>
           </header>
+
+          <div className="flex gap-3">
+            <Link href="/settings" className="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-zinc-200 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-lg px-4 py-2 transition-colors">
+              <Settings className="w-4 h-4" />
+              Configurações
+            </Link>
+          </div>
 
           <GenerationForm />
         </div>

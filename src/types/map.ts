@@ -31,6 +31,8 @@ export interface ActionPlan {
   playbook?: string | null
 }
 
+export type TabAudios = Record<string, string | null>
+
 export interface MapData {
   id: string
   client_username: string
