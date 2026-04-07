@@ -28,7 +28,7 @@ export default function LoginPage() {
         return
       }
 
-      router.push("/")
+      router.push("/settings")
       router.refresh()
     } catch {
       setError("Erro ao conectar. Tente novamente.")
