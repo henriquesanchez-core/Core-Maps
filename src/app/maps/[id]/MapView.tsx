@@ -5,7 +5,7 @@ import Link from "next/link"
 import {
   ArrowLeft, User, Flame, ExternalLink, Play, Type, FileText,
   Save, Loader2, ChevronDown, ChevronUp, CalendarDays, Target,
-  Users, Sparkles,
+  Users, Sparkles, Share2, Check,
 } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
@@ -38,6 +38,13 @@ export function MapView({ mapData }: { mapData: MapData }) {
   const [saving, setSaving] = useState(false)
   const [dirty, setDirty] = useState(false)
   const [expandedScripts, setExpandedScripts] = useState<Record<number, boolean>>({})
+  const [copied, setCopied] = useState(false)
+
+  function copyLink() {
+    navigator.clipboard.writeText(window.location.href)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   const profile = mapData.extracted_profile
   const nucleoFields = profile ? [
@@ -109,12 +116,12 @@ export function MapView({ mapData }: { mapData: MapData }) {
 
       {/* Header with profile + back */}
       <header className="sticky top-0 z-50 bg-[#050507]/80 backdrop-blur-xl border-b border-white/[0.06]">
-        <div className="max-w-5xl mx-auto px-6 py-3 flex items-center gap-4">
-          <Link href="/" className="text-zinc-500 hover:text-white transition-colors shrink-0">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-3 sm:gap-4">
+          <Link href="/" className="text-zinc-500 hover:text-white transition-colors shrink-0 no-print">
             <ArrowLeft className="w-4 h-4" />
           </Link>
 
-          <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0">
             {mapData.client_data.profilePicUrl ? (
               <img
                 src={mapData.client_data.profilePicUrl}
@@ -134,15 +141,29 @@ export function MapView({ mapData }: { mapData: MapData }) {
             </div>
           </div>
 
-          <span className="text-zinc-600 text-[10px] tracking-widest uppercase hidden sm:block shrink-0">
-            Mapa Estratégico
-          </span>
+          <button
+            onClick={copyLink}
+            className="flex items-center gap-1.5 text-zinc-500 hover:text-[var(--gold)] transition-colors shrink-0 no-print cursor-pointer"
+            title="Copiar link"
+          >
+            {copied ? (
+              <>
+                <Check className="w-4 h-4 text-emerald-400" />
+                <span className="text-xs text-emerald-400 hidden sm:inline">Copiado!</span>
+              </>
+            ) : (
+              <>
+                <Share2 className="w-4 h-4" />
+                <span className="text-xs hidden sm:inline">Compartilhar</span>
+              </>
+            )}
+          </button>
         </div>
       </header>
 
       {/* Tab Navigation */}
       <nav className="sticky top-[57px] z-40 bg-[#050507]/90 backdrop-blur-xl border-b border-white/[0.06]">
-        <div className="max-w-5xl mx-auto px-6">
+        <div className="max-w-5xl mx-auto px-3 sm:px-6">
           <div className="flex gap-1 overflow-x-auto scrollbar-hide py-2">
             {TABS.map((tab) => {
               const Icon = tab.icon
@@ -151,13 +172,13 @@ export function MapView({ mapData }: { mapData: MapData }) {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all cursor-pointer shrink-0
+                  className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap transition-all cursor-pointer shrink-0
                     ${isActive
                       ? "bg-[var(--gold)]/10 text-[var(--gold)] border border-[var(--gold)]/20"
                       : "text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.03]"
                     }`}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   {tab.label}
                 </button>
               )
@@ -167,7 +188,7 @@ export function MapView({ mapData }: { mapData: MapData }) {
       </nav>
 
       {/* Content Area */}
-      <main className="relative z-10 max-w-5xl mx-auto px-6 py-10">
+      <main className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
 
         {/* ═══ TAB: Núcleo de Influência ═══ */}
         {activeTab === "nucleo" && (
@@ -181,7 +202,7 @@ export function MapView({ mapData }: { mapData: MapData }) {
                 </h2>
 
                 <div className="premium-border rounded-2xl">
-                  <div className="bg-[#0a0a0f] rounded-2xl p-8 space-y-6">
+                  <div className="bg-[#0a0a0f] rounded-2xl p-5 sm:p-8 space-y-5 sm:space-y-6">
                     {profile.nome && (
                       <div className="text-center pb-6 border-b border-white/[0.06]">
                         <p className="text-xs text-zinc-600 uppercase tracking-widest mb-2">Nome</p>
@@ -212,10 +233,10 @@ export function MapView({ mapData }: { mapData: MapData }) {
                   <Target className="w-5 h-5 text-[var(--gold)]" />
                   Narrativa Magnética
                 </h2>
-                <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-8 md:p-10">
-                  <div className="prose prose-invert prose-premium max-w-none text-zinc-300 leading-relaxed">
+                <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 sm:p-8 md:p-10">
+                  <div className="prose prose-invert prose-premium max-w-none text-zinc-300 leading-relaxed text-sm sm:text-base">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {mapData.narrative}
+                      {mapData.narrative.replace(/(Qual|E qual) d(ess|est)as.*?(\?|!)/gi, '').trim()}
                     </ReactMarkdown>
                   </div>
                 </div>
@@ -254,7 +275,7 @@ export function MapView({ mapData }: { mapData: MapData }) {
                     </h2>
                     <div className="space-y-4">
                       {viralTermExamples.map((item, i) => (
-                        <div key={i} className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-5 space-y-3">
+                        <div key={i} className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 sm:p-5 space-y-3">
                           <div>
                             <p className="text-[11px] text-zinc-600 uppercase tracking-widest mb-1.5">Termo Viral</p>
                             <span className="inline-flex items-center gap-1.5 bg-orange-500/10 border border-orange-500/20 text-orange-300 rounded-full px-4 py-1.5 text-sm font-medium">
@@ -367,24 +388,30 @@ export function MapView({ mapData }: { mapData: MapData }) {
         {/* ═══ TAB: Headlines ═══ */}
         {activeTab === "headlines" && (
           <div className="space-y-10 animate-fade-up">
-            {/* Estruturas de Headline */}
             {headlineExamples.length > 0 ? (
               <section>
                 <h2 className="text-xl font-bold text-white tracking-tight mb-6 flex items-center gap-3">
                   <Type className="w-5 h-5 text-blue-400" />
                   Estruturas de Headline
                 </h2>
-                <div className="space-y-4">
+                <div className="space-y-5">
                   {headlineExamples.map((item, i) => (
-                    <div key={i} className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-5">
-                      <p className="text-[11px] text-zinc-600 uppercase tracking-widest mb-2">Estrutura</p>
-                      <p className="text-sm text-zinc-400 mb-4 font-mono">{item.structure}</p>
-                      <p className="text-[11px] text-[var(--gold)] uppercase tracking-widest mb-2">Exemplo Preenchido</p>
-                      <EditableField
-                        value={item.filled_example}
-                        onChange={(val) => updateHeadline(i, val)}
-                        className="text-sm text-zinc-100 font-medium"
-                      />
+                    <div key={i} className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 sm:p-6">
+                      <div className="flex items-center gap-2.5 mb-4">
+                        <div className="section-number">{i + 1}</div>
+                        <span className="text-xs text-zinc-500 uppercase tracking-widest font-semibold">Estrutura</span>
+                      </div>
+                      <p className="text-base sm:text-lg text-white font-semibold leading-relaxed mb-4">
+                        {item.structure}
+                      </p>
+                      <div className="border-t border-white/[0.06] pt-3">
+                        <p className="text-[10px] text-zinc-600 uppercase tracking-widest mb-1.5">Exemplo aplicado</p>
+                        <EditableField
+                          value={item.filled_example}
+                          onChange={(val) => updateHeadline(i, val)}
+                          className="text-sm text-zinc-400 italic"
+                        />
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -395,13 +422,16 @@ export function MapView({ mapData }: { mapData: MapData }) {
                   <Type className="w-5 h-5 text-blue-400" />
                   Estruturas de Headline
                 </h2>
-                <div className="space-y-3">
+                <div className="space-y-5">
                   {mapData.headline_structures.map((headline, i) => (
-                    <div key={i} className="flex items-start gap-3 bg-white/[0.02] border border-white/[0.06] rounded-xl p-4">
-                      <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
-                        <Type className="w-4 h-4 text-blue-400" />
+                    <div key={i} className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 sm:p-6">
+                      <div className="flex items-center gap-2.5 mb-4">
+                        <div className="section-number">{i + 1}</div>
+                        <span className="text-xs text-zinc-500 uppercase tracking-widest font-semibold">Estrutura</span>
                       </div>
-                      <p className="text-sm text-zinc-200 leading-relaxed pt-1">{headline}</p>
+                      <p className="text-base sm:text-lg text-white font-semibold leading-relaxed">
+                        {headline}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -418,56 +448,67 @@ export function MapView({ mapData }: { mapData: MapData }) {
         {/* ═══ TAB: Roteiro ═══ */}
         {activeTab === "roteiro" && (
           <div className="space-y-10 animate-fade-up">
-            {(scriptRewrites.length > 0 || mapData.script_examples.length > 0) ? (
+            {mapData.script_examples.length > 0 ? (
+              <section>
+                <h2 className="text-xl font-bold text-white tracking-tight mb-6 flex items-center gap-3">
+                  <FileText className="w-5 h-5 text-emerald-400" />
+                  Estruturas de Roteiro
+                </h2>
+                <div className="space-y-6">
+                  {mapData.script_examples.map((script, i) => (
+                    <div key={i} className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 sm:p-6">
+                      <div className="flex items-center gap-2.5 mb-4">
+                        <div className="section-number">{i + 1}</div>
+                        <span className="text-xs text-zinc-500 uppercase tracking-widest font-semibold">Estrutura</span>
+                      </div>
+                      <p className="text-sm sm:text-base text-white leading-relaxed whitespace-pre-wrap font-medium">
+                        {script}
+                      </p>
+
+                      {/* Personalized version (collapsible) */}
+                      {scriptRewrites[i] && (
+                        <div className="mt-5 border-t border-white/[0.06] pt-4">
+                          <button
+                            onClick={() => toggleScript(i)}
+                            className="flex items-center gap-1.5 text-[11px] text-[var(--gold)] uppercase tracking-widest hover:text-[var(--gold-light)] transition-colors cursor-pointer"
+                          >
+                            {expandedScripts[i] ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                            Ver exemplo personalizado
+                          </button>
+                          {expandedScripts[i] && (
+                            <div className="mt-3 p-4 bg-white/[0.02] border border-[var(--gold)]/10 rounded-lg">
+                              <p className="text-[10px] text-zinc-600 uppercase tracking-widest mb-2">Roteiro personalizado para o seu nicho</p>
+                              <EditableScript
+                                value={scriptRewrites[i]}
+                                onChange={(val) => updateScriptRewrite(i, val)}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ) : scriptRewrites.length > 0 ? (
               <section>
                 <h2 className="text-xl font-bold text-white tracking-tight mb-6 flex items-center gap-3">
                   <FileText className="w-5 h-5 text-emerald-400" />
                   Roteiros
                 </h2>
                 <div className="space-y-6">
-                  {scriptRewrites.length > 0 ? (
-                    scriptRewrites.map((script, i) => (
-                      <div key={i} className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-6">
-                        <div className="flex items-center gap-2 mb-4">
-                          <FileText className="w-4 h-4 text-emerald-400" />
-                          <span className="text-xs text-zinc-500 uppercase tracking-widest">Roteiro {i + 1}</span>
-                        </div>
-
-                        {mapData.script_examples[i] && (
-                          <div className="mb-4">
-                            <button
-                              onClick={() => toggleScript(i)}
-                              className="flex items-center gap-1.5 text-[11px] text-zinc-600 uppercase tracking-widest hover:text-zinc-400 transition-colors cursor-pointer"
-                            >
-                              {expandedScripts[i] ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                              Estrutura Original
-                            </button>
-                            {expandedScripts[i] && (
-                              <div className="mt-2 p-3 bg-white/[0.02] border border-white/[0.04] rounded-lg">
-                                <p className="text-xs text-zinc-500 leading-relaxed whitespace-pre-wrap font-mono">{mapData.script_examples[i]}</p>
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        <p className="text-[11px] text-[var(--gold)] uppercase tracking-widest mb-2">Roteiro Personalizado</p>
-                        <EditableScript
-                          value={script}
-                          onChange={(val) => updateScriptRewrite(i, val)}
-                        />
+                  {scriptRewrites.map((script, i) => (
+                    <div key={i} className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 sm:p-6">
+                      <div className="flex items-center gap-2.5 mb-4">
+                        <div className="section-number">{i + 1}</div>
+                        <span className="text-xs text-zinc-500 uppercase tracking-widest font-semibold">Roteiro</span>
                       </div>
-                    ))
-                  ) : (
-                    mapData.script_examples.map((script, i) => (
-                      <div key={i} className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-6">
-                        <div className="flex items-center gap-2 mb-3">
-                          <FileText className="w-4 h-4 text-emerald-400" />
-                          <span className="text-xs text-zinc-500 uppercase tracking-widest">Roteiro {i + 1}</span>
-                        </div>
-                        <p className="text-sm text-zinc-200 leading-relaxed whitespace-pre-wrap">{script}</p>
-                      </div>
-                    ))
-                  )}
+                      <EditableScript
+                        value={script}
+                        onChange={(val) => updateScriptRewrite(i, val)}
+                      />
+                    </div>
+                  ))}
                 </div>
               </section>
             ) : (
@@ -488,17 +529,17 @@ export function MapView({ mapData }: { mapData: MapData }) {
                   <CalendarDays className="w-5 h-5 text-[var(--gold)]" />
                   Playbook de 15 Dias
                 </h2>
-                <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-8 md:p-10">
-                  <div className="flex items-center gap-3 mb-6 pb-4 border-b border-white/[0.06]">
-                    <div className="w-10 h-10 rounded-xl bg-[var(--gold)]/10 flex items-center justify-center">
-                      <CalendarDays className="w-5 h-5 text-[var(--gold)]" />
+                <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 sm:p-8 md:p-10">
+                  <div className="flex items-center gap-3 mb-5 sm:mb-6 pb-4 border-b border-white/[0.06]">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[var(--gold)]/10 flex items-center justify-center shrink-0">
+                      <CalendarDays className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--gold)]" />
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-white">Seu planejamento personalizado</p>
                       <p className="text-xs text-zinc-500">Siga este playbook dia a dia para máximo resultado</p>
                     </div>
                   </div>
-                  <div className="prose prose-invert prose-premium max-w-none text-zinc-300 leading-relaxed">
+                  <div className="prose prose-invert prose-premium max-w-none text-zinc-300 leading-relaxed text-sm sm:text-base">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {mapData.action_plan.playbook}
                     </ReactMarkdown>
@@ -517,11 +558,11 @@ export function MapView({ mapData }: { mapData: MapData }) {
 
       {/* Floating save button */}
       {dirty && (
-        <div className="fixed bottom-6 right-6 z-50">
+        <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 z-50">
           <button
             onClick={save}
             disabled={saving}
-            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-5 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all cursor-pointer disabled:opacity-50"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-5 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all cursor-pointer disabled:opacity-50"
           >
             {saving ? (
               <Loader2 className="w-4 h-4 animate-spin" />

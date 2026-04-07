@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase"
 import Link from "next/link"
+import type { Metadata } from "next"
 import type { MapData } from "@/types/map"
 import { MapView } from "./MapView"
 
@@ -9,6 +10,24 @@ function parseJsonSafe(str: any, fallback: any = null) {
   if (!str) return fallback
   if (typeof str !== 'string') return str
   try { return JSON.parse(str) } catch { return fallback }
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params
+  const { data: map } = await supabase.from('maps').select('client_username, client_data, extracted_profile').eq('id', id).single()
+
+  const name = map?.client_data?.fullName || map?.extracted_profile?.nome || map?.client_username || 'Cliente'
+  const especialidade = map?.extracted_profile?.especialidade || ''
+
+  return {
+    title: `Mapa Estratégico — ${name}`,
+    description: especialidade ? `Mapa estratégico de conteúdo para ${name} • ${especialidade}` : `Mapa estratégico de conteúdo personalizado para ${name}`,
+    openGraph: {
+      title: `Mapa Estratégico — ${name}`,
+      description: especialidade ? `Mapa estratégico de conteúdo • ${especialidade}` : `Mapa estratégico de conteúdo personalizado`,
+      type: 'website',
+    },
+  }
 }
 
 export default async function MapPage({ params }: { params: Promise<{ id: string }> }) {

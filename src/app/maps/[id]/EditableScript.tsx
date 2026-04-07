@@ -47,7 +47,7 @@ export function EditableScript({ value, onChange, className = "" }: EditableScri
 
   return (
     <div className={`group relative ${className}`}>
-      <p className="text-sm text-zinc-200 leading-relaxed whitespace-pre-wrap">{value}</p>
+      <p className="text-sm text-zinc-300 leading-[1.8] whitespace-pre-wrap">{value}</p>
       <button
         onClick={() => { setDraft(value); setEditing(true) }}
         className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 text-zinc-600 hover:text-[var(--gold)] transition-all no-print edit-controls cursor-pointer"

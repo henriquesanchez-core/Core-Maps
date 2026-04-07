@@ -51,7 +51,9 @@ Logo após a narrativa, crie a minha apresentação de impacto. Ela deve soar hu
 - Opção B (Focada na Empatia e Dor): "Meu nome é [Nome], e eu sei que você se sente [Dor/Exausto] por causa do [Inimigo]. Mas calma, eu estou aqui para te mostrar o caminho para [Desejo/Solução]."
 - Opção C (Brevidade Inteligente): Crie uma versão extremamente enxuta e de alto impacto focada na transformação real.
 
-A linguagem deve ser natural, falada, sem parecer robô.`;
+A linguagem deve ser natural, falada, sem parecer robô.
+
+MUITO IMPORTANTE: Retorne APENAS as 3 opções geradas. Não inclua introduções, saudações, conversas ou perguntas finais (ex: "Qual dessas opções mais ressoa com você?"). Entregue diretamente e unicamente o conteúdo final.`;
 
 export const HEADLINE_EXAMPLES_PROMPT = `Aja como um Copywriter Sênior especialista no "Método Audience" de headlines virais para Instagram/Reels.
 
@@ -101,23 +103,25 @@ Retorne APENAS um JSON válido, sem markdown, sem texto adicional, neste formato
   ]
 }`;
 
-export const PLAYBOOK_PROMPT = `Aja como um Estrategista de Conteúdo Sênior especialista no "Método Audience". Você vai criar um PLAYBOOK DE 15 DIAS — um planejamento prático, dia a dia, para o mentorado executar imediatamente após receber seu Mapa Estratégico.
+export const PLAYBOOK_PROMPT = `Você é um mentor de conteúdo escrevendo instruções práticas para o SEU CLIENTE. O cliente acabou de receber o Mapa Estratégico dele e agora precisa de um passo a passo de 15 dias para colocar tudo em prática.
 
-Você tem acesso a TODAS as informações do mapa estratégico desse mentorado:
+IMPORTANTE: Você está falando DIRETAMENTE com o cliente. Use "você" (não "mentorado"). O tom deve ser de um mentor dando tarefas claras para o aluno executar — como um professor passando lição de casa.
 
-PERFIL DO MENTORADO (Núcleo de Influência):
+Aqui estão TODOS os dados do mapa estratégico desse cliente:
+
+PERFIL (Núcleo de Influência):
 {{NUCLEO_INFLUENCIA}}
 
 NARRATIVA MAGNÉTICA:
 {{NARRATIVE}}
 
-REFERÊNCIAS A SEGUIR:
+PERFIS DE REFERÊNCIA:
 {{REFERENCES}}
 
 TERMOS VIRAIS:
 {{VIRAL_TERMS}}
 
-ESTRUTURAS DE HEADLINE (com exemplos preenchidos):
+ESTRUTURAS DE HEADLINE (com exemplos preenchidos pela IA):
 {{HEADLINE_EXAMPLES}}
 
 ROTEIROS PERSONALIZADOS:
@@ -128,23 +132,30 @@ VÍDEOS DE REFERÊNCIA:
 
 ---
 
-Crie um PLAYBOOK DE 15 DIAS com as seguintes regras:
+Crie um PLAYBOOK DE 15 DIAS seguindo estas regras:
 
-1. Cada dia deve ter uma ação ESPECÍFICA e PRÁTICA (não genérica)
-2. Use os elementos reais do mapa: as headlines específicas, os termos virais, os roteiros, as referências
-3. Distribua ao longo dos 15 dias:
-   - Criação de vídeos usando os roteiros personalizados
-   - Publicação com as headlines e termos virais
-   - Análise das referências para encontrar assuntos replicáveis
-   - Aplicação da narrativa magnética nos vídeos
-   - Testes de diferentes estruturas de headline
-4. Seja DIRETO e PRÁTICO — o mentorado precisa abrir isso e saber exatamente o que fazer
-5. Cada dia deve mencionar qual recurso do mapa usar (ex: "Use o Roteiro 1", "Aplique o termo viral 'X'", "Estude a referência @fulano")
+1. FALE DIRETAMENTE COM O CLIENTE — "Abra a aba Referências do seu mapa e...", "Vá na aba Headlines e pegue a estrutura 1..."
+2. Cada dia deve ter EXERCÍCIOS CONCRETOS que o cliente consegue fazer sozinho. Exemplos do tipo de tarefa:
+   - "Abra os perfis de referência (@username) e encontre os 10 posts com mais views. Anote o que eles têm em comum."
+   - "Pegue a Estrutura de Headline 1 do seu mapa e crie 3 variações para o seu nicho."
+   - "Use o Termo Viral 'X' e escreva 5 headlines diferentes aplicando ele."
+   - "Grave um vídeo de 60s usando o Roteiro 1 do seu mapa. Não precisa ficar perfeito, só grave."
+   - "Assista os vídeos de referência e anote a estrutura: gancho, desenvolvimento, CTA."
+   - "Releia sua Narrativa Magnética e escreva 3 ganchos de vídeo que conectem com a dor do seu público."
+3. REFERENCIE ELEMENTOS ESPECÍFICOS do mapa pelo nome/número — cite os termos virais reais, os @usernames das referências, as estruturas de headline pelo número
+4. Distribua assim ao longo dos 15 dias:
+   - Dias 1-3: Estudo e absorção (analisar referências, entender as estruturas, estudar os vídeos de referência)
+   - Dias 4-7: Prática de headlines e ganchos (criar variações usando as estruturas e termos virais)
+   - Dias 8-11: Produção de conteúdo (gravar vídeos usando os roteiros, aplicar as headlines)
+   - Dias 12-15: Publicação e análise (postar, testar diferentes headlines, analisar resultados)
+5. Cada dia deve ter entre 2-4 tarefas específicas. Não mais que isso.
+6. Inclua dicas curtas de execução quando relevante (ex: "Dica: grave em luz natural, perto da janela")
 
-Use formatação Markdown rica:
-- Use ## para semanas (Semana 1, Semana 2, Semana 3)
-- Use **Dia X:** em negrito para cada dia
-- Use bullet points para as ações do dia
-- Destaque os elementos do mapa em **negrito** quando mencionados
+Formatação Markdown:
+- Use ## para semanas (Semana 1: Estudo e Absorção, Semana 2: Produção, Semana 3: Publicação)
+- Use ### **Dia X — [Tema do dia]** para cada dia
+- Use checkboxes (- [ ]) para as tarefas, para o cliente poder marcar o que já fez
+- Destaque elementos do mapa em **negrito**
+- Use > blockquote para dicas
 
-Escreva em português brasileiro, linguagem direta e motivacional.`;
+Escreva em português brasileiro, tom direto e encorajador. Não seja genérico — cada tarefa deve ser TÃO específica que o cliente não tenha dúvida do que fazer.`;
