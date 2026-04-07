@@ -6,7 +6,7 @@ import Link from "next/link"
 import {
   ArrowLeft, User, Flame, ExternalLink, Play, Type, FileText,
   Save, Loader2, ChevronDown, ChevronUp, CalendarDays, Target,
-  Users, Sparkles, Share2, Check, Volume2,
+  Users, Sparkles, Share2, Check,
 } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
@@ -25,12 +25,29 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]["id"]
 
-function TabAudioPlayer({ url }: { url: string }) {
+const TAB_AUDIO_LABELS: Record<string, string> = {
+  nucleo: "Núcleo de Influência",
+  virais: "Termos Virais",
+  referencias: "Referências Estratégicas",
+  headlines: "Estruturas de Headline",
+  roteiro: "Estruturas de Roteiro",
+  playbook: "Seu Playbook de 15 Dias",
+}
+
+function TabAudioPlayer({ url, tabId }: { url: string; tabId: string }) {
+  const label = TAB_AUDIO_LABELS[tabId] || "esta seção"
   return (
-    <div className="flex items-center gap-3 bg-[var(--gold)]/[0.06] border border-[var(--gold)]/15 rounded-xl px-4 py-3 mb-6">
-      <Volume2 className="w-4 h-4 text-[var(--gold)] shrink-0" />
-      <span className="text-xs text-[var(--gold)] font-medium whitespace-nowrap">Ouça a explicação</span>
-      <audio src={url} controls className="h-8 flex-1 min-w-0" />
+    <div className="mb-8 rounded-2xl border border-[var(--gold)]/20 bg-gradient-to-br from-[var(--gold)]/[0.06] via-transparent to-[var(--gold)]/[0.03] p-4 sm:p-5">
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--gold-dark)] to-[var(--gold)] flex items-center justify-center shrink-0 shadow-lg shadow-[var(--gold)]/10">
+          <span className="text-[13px] font-bold text-zinc-950">E</span>
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-white leading-tight">Elias Maman</p>
+          <p className="text-xs text-zinc-400">Explicação sobre {label}</p>
+        </div>
+      </div>
+      <audio src={url} controls className="w-full h-10" />
     </div>
   )
 }
@@ -213,7 +230,7 @@ export function MapView({ mapData, tabAudios = {} }: { mapData: MapData; tabAudi
         {/* ═══ TAB: Núcleo de Influência ═══ */}
         {activeTab === "nucleo" && (
           <div className="space-y-12 animate-fade-up">
-            {tabAudios.nucleo && <TabAudioPlayer url={tabAudios.nucleo} />}
+            {tabAudios.nucleo && <TabAudioPlayer url={tabAudios.nucleo} tabId="nucleo" />}
             {/* Núcleo de Influência */}
             {profile && (
               <section>
@@ -269,7 +286,7 @@ export function MapView({ mapData, tabAudios = {} }: { mapData: MapData; tabAudi
         {/* ═══ TAB: Termos Virais ═══ */}
         {activeTab === "virais" && (
           <div className="space-y-10 animate-fade-up">
-            {tabAudios.virais && <TabAudioPlayer url={tabAudios.virais} />}
+            {tabAudios.virais && <TabAudioPlayer url={tabAudios.virais} tabId="virais" />}
             {/* Termos Virais */}
             {(mapData.viral_terms.length > 0 || viralTermExamples.length > 0) ? (
               <>
@@ -335,7 +352,7 @@ export function MapView({ mapData, tabAudios = {} }: { mapData: MapData; tabAudi
         {/* ═══ TAB: Referências ═══ */}
         {activeTab === "referencias" && (
           <div className="space-y-10 animate-fade-up">
-            {tabAudios.referencias && <TabAudioPlayer url={tabAudios.referencias} />}
+            {tabAudios.referencias && <TabAudioPlayer url={tabAudios.referencias} tabId="referencias" />}
             {/* Perfis de Referência */}
             {mapData.references_data.length > 0 && (
               <section>
@@ -415,7 +432,7 @@ export function MapView({ mapData, tabAudios = {} }: { mapData: MapData; tabAudi
         {/* ═══ TAB: Headlines ═══ */}
         {activeTab === "headlines" && (
           <div className="space-y-10 animate-fade-up">
-            {tabAudios.headlines && <TabAudioPlayer url={tabAudios.headlines} />}
+            {tabAudios.headlines && <TabAudioPlayer url={tabAudios.headlines} tabId="headlines" />}
             {headlineExamples.length > 0 ? (
               <section>
                 <h2 className="text-xl font-bold text-white tracking-tight mb-6 flex items-center gap-3">
@@ -480,7 +497,7 @@ export function MapView({ mapData, tabAudios = {} }: { mapData: MapData; tabAudi
         {/* ═══ TAB: Roteiro ═══ */}
         {activeTab === "roteiro" && (
           <div className="space-y-10 animate-fade-up">
-            {tabAudios.roteiro && <TabAudioPlayer url={tabAudios.roteiro} />}
+            {tabAudios.roteiro && <TabAudioPlayer url={tabAudios.roteiro} tabId="roteiro" />}
             {mapData.script_examples.length > 0 ? (
               <section>
                 <h2 className="text-xl font-bold text-white tracking-tight mb-6 flex items-center gap-3">
@@ -564,7 +581,7 @@ export function MapView({ mapData, tabAudios = {} }: { mapData: MapData; tabAudi
         {/* ═══ TAB: Próximos Passos (Playbook) ═══ */}
         {activeTab === "playbook" && (
           <div className="animate-fade-up">
-            {tabAudios.playbook && <TabAudioPlayer url={tabAudios.playbook} />}
+            {tabAudios.playbook && <TabAudioPlayer url={tabAudios.playbook} tabId="playbook" />}
             {mapData.action_plan?.playbook ? (
               <section>
                 <h2 className="text-xl font-bold text-white tracking-tight mb-6 flex items-center gap-3">
