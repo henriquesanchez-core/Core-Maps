@@ -73,12 +73,17 @@ export default async function MapPage({ params }: { params: Promise<{ id: string
     action_plan: actionPlan,
   }
 
-  // Fetch tab audios
+  // Fetch tab audios + speaker image
   const { data: audioRows } = await supabase.from('tab_audios').select('tab_id, audio_url')
   const tabAudios: TabAudios = {}
+  let speakerImage: string | null = null
   for (const row of audioRows || []) {
-    tabAudios[row.tab_id] = row.audio_url
+    if (row.tab_id === 'speaker_image') {
+      speakerImage = row.audio_url
+    } else {
+      tabAudios[row.tab_id] = row.audio_url
+    }
   }
 
-  return <MapView mapData={mapData} tabAudios={tabAudios} />
+  return <MapView mapData={mapData} tabAudios={tabAudios} speakerImage={speakerImage} />
 }

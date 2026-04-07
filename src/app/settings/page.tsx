@@ -14,5 +14,7 @@ export default async function SettingsPage() {
     audios[t] = data?.find((r) => r.tab_id === t)?.audio_url ?? null
   }
 
-  return <SettingsView initialAudios={audios} />
+  const speakerImage = data?.find((r) => r.tab_id === "speaker_image")?.audio_url ?? null
+
+  return <SettingsView initialAudios={audios} initialSpeakerImage={speakerImage} />
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useRef, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import {
@@ -34,25 +34,125 @@ const TAB_AUDIO_LABELS: Record<string, string> = {
   playbook: "Seu Playbook de 15 Dias",
 }
 
-function TabAudioPlayer({ url, tabId }: { url: string; tabId: string }) {
+function formatTime(s: number) {
+  const m = Math.floor(s / 60)
+  const sec = Math.floor(s % 60)
+  return `${m}:${sec.toString().padStart(2, "0")}`
+}
+
+function TabAudioPlayer({ url, tabId, image }: { url: string; tabId: string; image?: string | null }) {
   const label = TAB_AUDIO_LABELS[tabId] || "esta seção"
+  const audioRef = useRef<HTMLAudioElement>(null)
+  const [playing, setPlaying] = useState(false)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(0)
+
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio) return
+    const onTime = () => setCurrentTime(audio.currentTime)
+    const onMeta = () => setDuration(audio.duration)
+    const onEnd = () => setPlaying(false)
+    audio.addEventListener("timeupdate", onTime)
+    audio.addEventListener("loadedmetadata", onMeta)
+    audio.addEventListener("ended", onEnd)
+    return () => {
+      audio.removeEventListener("timeupdate", onTime)
+      audio.removeEventListener("loadedmetadata", onMeta)
+      audio.removeEventListener("ended", onEnd)
+    }
+  }, [])
+
+  function togglePlay() {
+    const audio = audioRef.current
+    if (!audio) return
+    if (playing) { audio.pause() } else { audio.play() }
+    setPlaying(!playing)
+  }
+
+  function seek(e: React.MouseEvent<HTMLDivElement>) {
+    const audio = audioRef.current
+    if (!audio || !duration) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
+    audio.currentTime = pct * duration
+  }
+
+  const progress = duration ? (currentTime / duration) * 100 : 0
+
   return (
-    <div className="mb-8 rounded-2xl border border-[var(--gold)]/20 bg-gradient-to-br from-[var(--gold)]/[0.06] via-transparent to-[var(--gold)]/[0.03] p-4 sm:p-5">
-      <div className="flex items-center gap-3 mb-3">
-        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--gold-dark)] to-[var(--gold)] flex items-center justify-center shrink-0 shadow-lg shadow-[var(--gold)]/10">
-          <span className="text-[13px] font-bold text-zinc-950">E</span>
-        </div>
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-white leading-tight">Elias Maman</p>
-          <p className="text-xs text-zinc-400">Explicação sobre {label}</p>
+    <div className="mb-8 rounded-2xl border border-[var(--gold)]/20 bg-gradient-to-br from-[#1a1a1f] to-[#0f0f13] p-4 sm:p-5">
+      <audio ref={audioRef} src={url} preload="metadata" />
+
+      <div className="flex items-center gap-4">
+        {/* Image */}
+        {image ? (
+          <img
+            src={image}
+            alt="Elias Maman"
+            className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover shrink-0 shadow-lg"
+          />
+        ) : (
+          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-gradient-to-br from-[var(--gold-dark)] to-[var(--gold)] flex items-center justify-center shrink-0 shadow-lg">
+            <span className="text-xl font-bold text-zinc-950">E</span>
+          </div>
+        )}
+
+        {/* Right side */}
+        <div className="flex-1 min-w-0 space-y-2.5">
+          {/* Title */}
+          <div className="min-w-0">
+            <p className="text-sm sm:text-base font-semibold text-white leading-tight truncate">
+              Explicação do Elias sobre {label}
+            </p>
+            <p className="text-xs text-zinc-500 mt-0.5">Elias Maman</p>
+          </div>
+
+          {/* Controls + progress */}
+          <div className="flex items-center gap-3">
+            {/* Play/Pause */}
+            <button
+              onClick={togglePlay}
+              className="w-8 h-8 rounded-full bg-white flex items-center justify-center shrink-0 hover:scale-105 transition-transform cursor-pointer"
+            >
+              {playing ? (
+                <svg width="12" height="14" viewBox="0 0 12 14" fill="none">
+                  <rect x="0" y="0" width="4" height="14" rx="1" fill="#050507" />
+                  <rect x="8" y="0" width="4" height="14" rx="1" fill="#050507" />
+                </svg>
+              ) : (
+                <svg width="12" height="14" viewBox="0 0 12 14" fill="none">
+                  <path d="M0 1.5C0 0.7 0.8 0.2 1.5 0.6L11.5 6.1C12.2 6.5 12.2 7.5 11.5 7.9L1.5 13.4C0.8 13.8 0 13.3 0 12.5V1.5Z" fill="#050507" />
+                </svg>
+              )}
+            </button>
+
+            {/* Time + bar */}
+            <div className="flex-1 min-w-0 space-y-1">
+              <div
+                className="h-1.5 bg-zinc-800 rounded-full cursor-pointer group relative"
+                onClick={seek}
+              >
+                <div
+                  className="h-full bg-[var(--gold)] rounded-full relative transition-all"
+                  style={{ width: `${progress}%` }}
+                >
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+              </div>
+              <div className="flex justify-between text-[10px] text-zinc-600 tabular-nums">
+                <span>{formatTime(currentTime)}</span>
+                <span>{duration ? formatTime(duration) : "0:00"}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      <audio src={url} controls className="w-full h-10" />
     </div>
   )
 }
 
-export function MapView({ mapData, tabAudios = {} }: { mapData: MapData; tabAudios?: TabAudios }) {
+export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: MapData; tabAudios?: TabAudios; speakerImage?: string | null }) {
   const searchParams = useSearchParams()
   const viewOnly = searchParams.get("v") === "1"
 
@@ -230,7 +330,7 @@ export function MapView({ mapData, tabAudios = {} }: { mapData: MapData; tabAudi
         {/* ═══ TAB: Núcleo de Influência ═══ */}
         {activeTab === "nucleo" && (
           <div className="space-y-12 animate-fade-up">
-            {tabAudios.nucleo && <TabAudioPlayer url={tabAudios.nucleo} tabId="nucleo" />}
+            {tabAudios.nucleo && <TabAudioPlayer url={tabAudios.nucleo} tabId="nucleo" image={speakerImage} />}
             {/* Núcleo de Influência */}
             {profile && (
               <section>
@@ -286,7 +386,7 @@ export function MapView({ mapData, tabAudios = {} }: { mapData: MapData; tabAudi
         {/* ═══ TAB: Termos Virais ═══ */}
         {activeTab === "virais" && (
           <div className="space-y-10 animate-fade-up">
-            {tabAudios.virais && <TabAudioPlayer url={tabAudios.virais} tabId="virais" />}
+            {tabAudios.virais && <TabAudioPlayer url={tabAudios.virais} tabId="virais" image={speakerImage} />}
             {/* Termos Virais */}
             {(mapData.viral_terms.length > 0 || viralTermExamples.length > 0) ? (
               <>
@@ -352,7 +452,7 @@ export function MapView({ mapData, tabAudios = {} }: { mapData: MapData; tabAudi
         {/* ═══ TAB: Referências ═══ */}
         {activeTab === "referencias" && (
           <div className="space-y-10 animate-fade-up">
-            {tabAudios.referencias && <TabAudioPlayer url={tabAudios.referencias} tabId="referencias" />}
+            {tabAudios.referencias && <TabAudioPlayer url={tabAudios.referencias} tabId="referencias" image={speakerImage} />}
             {/* Perfis de Referência */}
             {mapData.references_data.length > 0 && (
               <section>
@@ -432,7 +532,7 @@ export function MapView({ mapData, tabAudios = {} }: { mapData: MapData; tabAudi
         {/* ═══ TAB: Headlines ═══ */}
         {activeTab === "headlines" && (
           <div className="space-y-10 animate-fade-up">
-            {tabAudios.headlines && <TabAudioPlayer url={tabAudios.headlines} tabId="headlines" />}
+            {tabAudios.headlines && <TabAudioPlayer url={tabAudios.headlines} tabId="headlines" image={speakerImage} />}
             {headlineExamples.length > 0 ? (
               <section>
                 <h2 className="text-xl font-bold text-white tracking-tight mb-6 flex items-center gap-3">
@@ -497,7 +597,7 @@ export function MapView({ mapData, tabAudios = {} }: { mapData: MapData; tabAudi
         {/* ═══ TAB: Roteiro ═══ */}
         {activeTab === "roteiro" && (
           <div className="space-y-10 animate-fade-up">
-            {tabAudios.roteiro && <TabAudioPlayer url={tabAudios.roteiro} tabId="roteiro" />}
+            {tabAudios.roteiro && <TabAudioPlayer url={tabAudios.roteiro} tabId="roteiro" image={speakerImage} />}
             {mapData.script_examples.length > 0 ? (
               <section>
                 <h2 className="text-xl font-bold text-white tracking-tight mb-6 flex items-center gap-3">
@@ -581,7 +681,7 @@ export function MapView({ mapData, tabAudios = {} }: { mapData: MapData; tabAudi
         {/* ═══ TAB: Próximos Passos (Playbook) ═══ */}
         {activeTab === "playbook" && (
           <div className="animate-fade-up">
-            {tabAudios.playbook && <TabAudioPlayer url={tabAudios.playbook} tabId="playbook" />}
+            {tabAudios.playbook && <TabAudioPlayer url={tabAudios.playbook} tabId="playbook" image={speakerImage} />}
             {mapData.action_plan?.playbook ? (
               <section>
                 <h2 className="text-xl font-bold text-white tracking-tight mb-6 flex items-center gap-3">

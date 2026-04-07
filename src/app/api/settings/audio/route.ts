@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 
-const VALID_TABS = ['nucleo', 'virais', 'referencias', 'headlines', 'roteiro', 'playbook']
+const VALID_TABS = ['nucleo', 'virais', 'referencias', 'headlines', 'roteiro', 'playbook', 'speaker_image']
 
 // GET — return all tab audios
 export async function GET() {

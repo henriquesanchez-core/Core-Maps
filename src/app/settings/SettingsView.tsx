@@ -15,6 +15,7 @@ import {
   Lightbulb,
   Video,
   BookOpen,
+  ImageIcon,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -31,14 +32,17 @@ const TABS = Object.keys(TAB_META)
 
 interface Props {
   initialAudios: Record<string, string | null>
+  initialSpeakerImage: string | null
 }
 
-export function SettingsView({ initialAudios }: Props) {
+export function SettingsView({ initialAudios, initialSpeakerImage }: Props) {
   const router = useRouter()
   const [audios, setAudios] = useState(initialAudios)
+  const [speakerImage, setSpeakerImage] = useState(initialSpeakerImage)
   const [uploading, setUploading] = useState<string | null>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({})
+  const imageRef = useRef<HTMLInputElement | null>(null)
 
   async function handleUpload(tabId: string, file: File) {
     setUploading(tabId)
@@ -51,19 +55,23 @@ export function SettingsView({ initialAudios }: Props) {
       const data = await res.json()
 
       if (res.ok) {
-        setAudios((prev) => ({ ...prev, [tabId]: data.audio_url }))
+        if (tabId === "speaker_image") {
+          setSpeakerImage(data.audio_url)
+        } else {
+          setAudios((prev) => ({ ...prev, [tabId]: data.audio_url }))
+        }
       } else {
         alert(data.error || "Erro no upload")
       }
     } catch {
-      alert("Erro ao enviar áudio")
+      alert("Erro ao enviar arquivo")
     } finally {
       setUploading(null)
     }
   }
 
   async function handleDelete(tabId: string) {
-    if (!confirm("Remover áudio desta aba?")) return
+    if (!confirm(tabId === "speaker_image" ? "Remover imagem?" : "Remover áudio desta aba?")) return
     setDeleting(tabId)
     try {
       const res = await fetch("/api/settings/audio", {
@@ -72,7 +80,11 @@ export function SettingsView({ initialAudios }: Props) {
         body: JSON.stringify({ tab_id: tabId }),
       })
       if (res.ok) {
-        setAudios((prev) => ({ ...prev, [tabId]: null }))
+        if (tabId === "speaker_image") {
+          setSpeakerImage(null)
+        } else {
+          setAudios((prev) => ({ ...prev, [tabId]: null }))
+        }
       }
     } catch {
       alert("Erro ao remover")
@@ -86,6 +98,9 @@ export function SettingsView({ initialAudios }: Props) {
     router.push("/login")
     router.refresh()
   }
+
+  const isUploadingImage = uploading === "speaker_image"
+  const isDeletingImage = deleting === "speaker_image"
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-200 p-4 md:p-8 font-sans">
@@ -109,6 +124,74 @@ export function SettingsView({ initialAudios }: Props) {
             Sair
           </button>
         </div>
+
+        {/* Speaker image section */}
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold text-zinc-100 flex items-center gap-2">
+              <ImageIcon className="w-5 h-5 text-[var(--gold)]" />
+              Imagem do Player
+            </h2>
+            <p className="text-sm text-zinc-500 mt-1">
+              Imagem que aparece no player de áudio em cada aba do mapa.
+            </p>
+          </div>
+
+          <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-4 sm:p-5 flex items-center gap-5">
+            {speakerImage ? (
+              <img
+                src={speakerImage}
+                alt="Speaker"
+                className="w-16 h-16 rounded-xl object-cover shrink-0 border border-zinc-700"
+              />
+            ) : (
+              <div className="w-16 h-16 rounded-xl bg-zinc-800 flex items-center justify-center shrink-0 border border-zinc-700">
+                <ImageIcon className="w-6 h-6 text-zinc-600" />
+              </div>
+            )}
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => imageRef.current?.click()}
+                disabled={isUploadingImage}
+                className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg border border-zinc-700 hover:border-[var(--gold)]/50 hover:text-[var(--gold)] transition-colors text-zinc-400 cursor-pointer"
+              >
+                {isUploadingImage ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Upload className="w-4 h-4" />
+                )}
+                {isUploadingImage ? "Enviando..." : speakerImage ? "Trocar Imagem" : "Enviar Imagem"}
+              </button>
+
+              {speakerImage && (
+                <button
+                  onClick={() => handleDelete("speaker_image")}
+                  disabled={isDeletingImage}
+                  className="text-zinc-500 hover:text-red-400 transition-colors cursor-pointer"
+                >
+                  {isDeletingImage ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="w-4 h-4" />
+                  )}
+                </button>
+              )}
+            </div>
+
+            <input
+              ref={imageRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) handleUpload("speaker_image", file)
+                e.target.value = ""
+              }}
+            />
+          </div>
+        </section>
 
         {/* Audio section */}
         <section className="space-y-4">
