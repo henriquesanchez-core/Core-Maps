@@ -4,7 +4,7 @@ import { jwtVerify } from 'jose'
 
 const secret = new TextEncoder().encode(process.env.AUTH_SECRET || 'fallback')
 
-const PROTECTED = ['/', '/settings']
+const PROTECTED = ['/settings']
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
@@ -26,5 +26,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/settings'],
+  matcher: ['/settings'],
 }
