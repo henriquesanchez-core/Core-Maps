@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useCallback } from "react"
+import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import {
   ArrowLeft, User, Flame, ExternalLink, Play, Type, FileText,
@@ -25,6 +26,9 @@ const TABS = [
 type TabId = (typeof TABS)[number]["id"]
 
 export function MapView({ mapData }: { mapData: MapData }) {
+  const searchParams = useSearchParams()
+  const viewOnly = searchParams.get("v") === "1"
+
   const [activeTab, setActiveTab] = useState<TabId>("nucleo")
   const [headlineExamples, setHeadlineExamples] = useState<HeadlineExample[]>(
     mapData.action_plan?.headline_examples ?? []
@@ -41,7 +45,9 @@ export function MapView({ mapData }: { mapData: MapData }) {
   const [copied, setCopied] = useState(false)
 
   function copyLink() {
-    navigator.clipboard.writeText(window.location.href)
+    const url = new URL(window.location.href)
+    url.searchParams.set("v", "1")
+    navigator.clipboard.writeText(url.toString())
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -117,9 +123,11 @@ export function MapView({ mapData }: { mapData: MapData }) {
       {/* Header with profile + back */}
       <header className="sticky top-0 z-50 bg-[#050507]/80 backdrop-blur-xl border-b border-white/[0.06]">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-3 sm:gap-4">
-          <Link href="/" className="text-zinc-500 hover:text-white transition-colors shrink-0 no-print">
-            <ArrowLeft className="w-4 h-4" />
-          </Link>
+          {!viewOnly && (
+            <Link href="/" className="text-zinc-500 hover:text-white transition-colors shrink-0 no-print">
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
+          )}
 
           <div className="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0">
             {mapData.client_data.profilePicUrl ? (
@@ -141,23 +149,25 @@ export function MapView({ mapData }: { mapData: MapData }) {
             </div>
           </div>
 
-          <button
-            onClick={copyLink}
-            className="flex items-center gap-1.5 text-zinc-500 hover:text-[var(--gold)] transition-colors shrink-0 no-print cursor-pointer"
-            title="Copiar link"
-          >
-            {copied ? (
-              <>
-                <Check className="w-4 h-4 text-emerald-400" />
-                <span className="text-xs text-emerald-400 hidden sm:inline">Copiado!</span>
-              </>
-            ) : (
-              <>
-                <Share2 className="w-4 h-4" />
-                <span className="text-xs hidden sm:inline">Compartilhar</span>
-              </>
-            )}
-          </button>
+          {!viewOnly && (
+            <button
+              onClick={copyLink}
+              className="flex items-center gap-1.5 text-zinc-500 hover:text-[var(--gold)] transition-colors shrink-0 no-print cursor-pointer"
+              title="Copiar link"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-4 h-4 text-emerald-400" />
+                  <span className="text-xs text-emerald-400 hidden sm:inline">Copiado!</span>
+                </>
+              ) : (
+                <>
+                  <Share2 className="w-4 h-4" />
+                  <span className="text-xs hidden sm:inline">Compartilhar</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
       </header>
 
@@ -285,11 +295,15 @@ export function MapView({ mapData }: { mapData: MapData }) {
                           </div>
                           <div>
                             <p className="text-[11px] text-[var(--gold)] uppercase tracking-widest mb-1.5">Exemplo de como aplicar na headline</p>
-                            <EditableField
-                              value={item.headline_example}
-                              onChange={(val) => updateViralTerm(i, val)}
-                              className="text-sm text-zinc-100 font-medium"
-                            />
+                            {viewOnly ? (
+                              <p className="text-sm text-zinc-100 font-medium">{item.headline_example}</p>
+                            ) : (
+                              <EditableField
+                                value={item.headline_example}
+                                onChange={(val) => updateViralTerm(i, val)}
+                                className="text-sm text-zinc-100 font-medium"
+                              />
+                            )}
                           </div>
                         </div>
                       ))}
@@ -406,11 +420,15 @@ export function MapView({ mapData }: { mapData: MapData }) {
                       </p>
                       <div className="border-t border-white/[0.06] pt-3">
                         <p className="text-[10px] text-zinc-600 uppercase tracking-widest mb-1.5">Exemplo aplicado</p>
-                        <EditableField
-                          value={item.filled_example}
-                          onChange={(val) => updateHeadline(i, val)}
-                          className="text-sm text-zinc-400 italic"
-                        />
+                        {viewOnly ? (
+                          <p className="text-sm text-zinc-400 italic">{item.filled_example}</p>
+                        ) : (
+                          <EditableField
+                            value={item.filled_example}
+                            onChange={(val) => updateHeadline(i, val)}
+                            className="text-sm text-zinc-400 italic"
+                          />
+                        )}
                       </div>
                     </div>
                   ))}
@@ -478,10 +496,14 @@ export function MapView({ mapData }: { mapData: MapData }) {
                           {expandedScripts[i] && (
                             <div className="mt-3 p-4 bg-white/[0.02] border border-[var(--gold)]/10 rounded-lg">
                               <p className="text-[10px] text-zinc-600 uppercase tracking-widest mb-2">Roteiro personalizado para o seu nicho</p>
-                              <EditableScript
-                                value={scriptRewrites[i]}
-                                onChange={(val) => updateScriptRewrite(i, val)}
-                              />
+                              {viewOnly ? (
+                                <p className="text-sm text-zinc-300 leading-[1.8] whitespace-pre-wrap">{scriptRewrites[i]}</p>
+                              ) : (
+                                <EditableScript
+                                  value={scriptRewrites[i]}
+                                  onChange={(val) => updateScriptRewrite(i, val)}
+                                />
+                              )}
                             </div>
                           )}
                         </div>
@@ -503,10 +525,14 @@ export function MapView({ mapData }: { mapData: MapData }) {
                         <div className="section-number">{i + 1}</div>
                         <span className="text-xs text-zinc-500 uppercase tracking-widest font-semibold">Roteiro</span>
                       </div>
-                      <EditableScript
-                        value={script}
-                        onChange={(val) => updateScriptRewrite(i, val)}
-                      />
+                      {viewOnly ? (
+                        <p className="text-sm text-zinc-300 leading-[1.8] whitespace-pre-wrap">{script}</p>
+                      ) : (
+                        <EditableScript
+                          value={script}
+                          onChange={(val) => updateScriptRewrite(i, val)}
+                        />
+                      )}
                     </div>
                   ))}
                 </div>
@@ -557,7 +583,7 @@ export function MapView({ mapData }: { mapData: MapData }) {
       </main>
 
       {/* Floating save button */}
-      {dirty && (
+      {dirty && !viewOnly && (
         <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 z-50">
           <button
             onClick={save}
