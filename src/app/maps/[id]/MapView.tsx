@@ -5,12 +5,19 @@ import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import {
   ArrowLeft, User, Flame, ExternalLink, Play, Type, FileText,
-  Save, Loader2, ChevronDown, ChevronUp, CalendarDays, Target,
+  Save, Loader2, CalendarDays, Target,
   Users, Sparkles, Share2, Check,
 } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
-import type { MapData, HeadlineExample, ViralTermExample, TabAudios } from "@/types/map"
+import type {
+  MapData,
+  HeadlineExample,
+  ViralTermExample,
+  TabAudios,
+  ScriptRewrite,
+  ScriptRewriteStructured,
+} from "@/types/map"
 import { EditableField } from "./EditableField"
 import { EditableScript } from "./EditableScript"
 
@@ -38,6 +45,11 @@ function formatTime(s: number) {
   const m = Math.floor(s / 60)
   const sec = Math.floor(s % 60)
   return `${m}:${sec.toString().padStart(2, "0")}`
+}
+
+function isStructuredScriptRewrite(script: unknown): script is ScriptRewriteStructured {
+  if (!script || typeof script !== "object") return false
+  return "headline" in script && "intensifier" in script && "first_list_topic" in script
 }
 
 function TabAudioPlayer({ url, tabId, image }: { url: string; tabId: string; image?: string | null }) {
@@ -163,12 +175,11 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
   const [viralTermExamples, setViralTermExamples] = useState<ViralTermExample[]>(
     mapData.action_plan?.viral_term_examples ?? []
   )
-  const [scriptRewrites, setScriptRewrites] = useState<string[]>(
+  const [scriptRewrites, setScriptRewrites] = useState<ScriptRewrite[]>(
     mapData.action_plan?.script_rewrites ?? []
   )
   const [saving, setSaving] = useState(false)
   const [dirty, setDirty] = useState(false)
-  const [expandedScripts, setExpandedScripts] = useState<Record<number, boolean>>({})
   const [copied, setCopied] = useState(false)
 
   function copyLink() {
@@ -181,13 +192,21 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
 
   const profile = mapData.extracted_profile
   const nucleoFields = profile ? [
-    { label: "Especialidade", value: profile.especialidade, color: "text-white" },
+    { label: "Especialidade", value: profile.termo_proprio || profile.especialidade, color: "text-white" },
     { label: "Público Alvo", value: profile.publico_alvo, color: "text-white" },
-    { label: "Dor que Resolve", value: profile.dor, color: "text-white" },
-    { label: "Inimigo Comum", value: profile.inimigo, color: "text-red-400" },
+    { label: "Dor que Resolve", value: profile.dor_principal || profile.dor, color: "text-white" },
+    { label: "Inimigo Comum", value: profile.nome_inimigo ? `${profile.inimigo} ("${profile.nome_inimigo}")` : profile.inimigo, color: "text-red-400" },
+    profile.solucao ? { label: "Solução", value: profile.solucao, color: "text-emerald-400" } : null,
+    profile.beneficios?.length > 0 ? { label: "Benefícios", value: profile.beneficios.join(" • "), color: "text-emerald-400" } : null,
     { label: "Desejo / Transformação", value: profile.desejo, color: "text-emerald-400" },
+    profile.mentira_crenca_errada ? { label: "Mentira que o Público Acredita", value: profile.mentira_crenca_errada, color: "text-orange-400" } : null,
+    profile.problema_filosofico ? { label: "Indignação", value: profile.problema_filosofico, color: "text-orange-400" } : null,
     { label: "Nova Crença", value: profile.nova_crenca, color: "text-[var(--gold-light)]" },
-  ] : []
+    profile.crencas_centrais?.length > 0 ? { label: "Crenças Centrais", value: profile.crencas_centrais.join(" | "), color: "text-[var(--gold-light)]" } : null,
+    profile.nome_metodo ? { label: "Método", value: profile.nome_metodo, color: "text-[var(--gold)]" } : null,
+    profile.solucoes_alternativas?.length > 0 ? { label: "O que já tentaram", value: profile.solucoes_alternativas.join("; "), color: "text-zinc-400" } : null,
+    profile.provas_cases ? { label: "Provas / Cases", value: profile.provas_cases, color: "text-zinc-400" } : null,
+  ].filter(Boolean) as { label: string; value: string; color: string }[] : []
 
   const save = useCallback(async () => {
     setSaving(true)
@@ -228,14 +247,41 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
 
   function updateScriptRewrite(index: number, newValue: string) {
     const updated = [...scriptRewrites]
+    if (typeof updated[index] !== "string") return
     updated[index] = newValue
     setScriptRewrites(updated)
     setDirty(true)
   }
 
-  function toggleScript(index: number) {
-    setExpandedScripts(prev => ({ ...prev, [index]: !prev[index] }))
+  function updateScriptStructuredField(
+    index: number,
+    section: keyof ScriptRewriteStructured,
+    field: "structure" | "modeled_example",
+    newValue: string
+  ) {
+    const updated = [...scriptRewrites]
+    const script = updated[index]
+
+    if (!script || typeof script === "string") return
+
+    updated[index] = {
+      ...script,
+      [section]: {
+        ...script[section],
+        [field]: newValue,
+      },
+    }
+
+    setScriptRewrites(updated)
+    setDirty(true)
   }
+
+
+  const structuredSections: { key: keyof ScriptRewriteStructured; title: string }[] = [
+    { key: "headline", title: "Headline" },
+    { key: "intensifier", title: "Intensificador" },
+    { key: "first_list_topic", title: "Primeiro tópico da lista" },
+  ]
 
   return (
     <div className="min-h-screen bg-[#050507] text-zinc-100 font-sans selection:bg-[var(--gold)]/20">
@@ -598,75 +644,65 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
         {activeTab === "roteiro" && (
           <div className="space-y-10 animate-fade-up">
             {tabAudios.roteiro && <TabAudioPlayer url={tabAudios.roteiro} tabId="roteiro" image={speakerImage} />}
-            {mapData.script_examples.length > 0 ? (
+            {scriptRewrites.length > 0 ? (
               <section>
                 <h2 className="text-xl font-bold text-white tracking-tight mb-6 flex items-center gap-3">
                   <FileText className="w-5 h-5 text-emerald-400" />
-                  Estruturas de Roteiro
+                  Estrutura de Roteiro com Exemplo
                 </h2>
                 <div className="space-y-6">
-                  {mapData.script_examples.map((script, i) => (
-                    <div key={i} className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 sm:p-6">
-                      <div className="flex items-center gap-2.5 mb-4">
-                        <div className="section-number">{i + 1}</div>
-                        <span className="text-xs text-zinc-500 uppercase tracking-widest font-semibold">Estrutura</span>
-                      </div>
-                      <p className="text-sm sm:text-base text-white leading-relaxed whitespace-pre-wrap font-medium">
-                        {script}
-                      </p>
+                  {scriptRewrites.map((script, i) => {
+                    if (!isStructuredScriptRewrite(script)) {
+                      return (
+                        <div key={i} className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 sm:p-6">
+                          <div className="flex items-center gap-2.5 mb-4">
+                            <div className="section-number">{i + 1}</div>
+                            <span className="text-xs text-zinc-500 uppercase tracking-widest font-semibold">Roteiro</span>
+                          </div>
+                          {viewOnly ? (
+                            <p className="text-sm text-zinc-300 leading-[1.8] whitespace-pre-wrap">{script}</p>
+                          ) : (
+                            <EditableScript
+                              value={script}
+                              onChange={(val) => updateScriptRewrite(i, val)}
+                            />
+                          )}
+                        </div>
+                      )
+                    }
 
-                      {/* Personalized version (collapsible) */}
-                      {scriptRewrites[i] && (
-                        <div className="mt-5 border-t border-white/[0.06] pt-4">
-                          <button
-                            onClick={() => toggleScript(i)}
-                            className="flex items-center gap-1.5 text-[11px] text-[var(--gold)] uppercase tracking-widest hover:text-[var(--gold-light)] transition-colors cursor-pointer"
-                          >
-                            {expandedScripts[i] ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                            Ver exemplo personalizado
-                          </button>
-                          {expandedScripts[i] && (
-                            <div className="mt-3 p-4 bg-white/[0.02] border border-[var(--gold)]/10 rounded-lg">
-                              <p className="text-[10px] text-zinc-600 uppercase tracking-widest mb-2">Roteiro personalizado para o seu nicho</p>
+                    return (
+                      <div key={i} className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 sm:p-6">
+                        <div className="flex items-center gap-2.5 mb-5 pb-4 border-b border-white/[0.06]">
+                          <div className="section-number">{i + 1}</div>
+                          <span className="text-xs text-zinc-500 uppercase tracking-widest font-semibold">Roteiro</span>
+                        </div>
+                        <div className="space-y-6">
+                          {structuredSections.map((section) => (
+                            <div key={section.key}>
+                              <p className="text-xs font-bold text-[var(--gold)] uppercase tracking-widest mb-1.5">
+                                {section.title}
+                              </p>
+                              <p className="text-[11px] text-zinc-600 italic mb-2.5 pb-2.5 border-b border-white/[0.05]">
+                                {script[section.key].structure || "—"}
+                              </p>
                               {viewOnly ? (
-                                <p className="text-sm text-zinc-300 leading-[1.8] whitespace-pre-wrap">{scriptRewrites[i]}</p>
+                                <p className="text-sm text-zinc-200 leading-relaxed font-medium">
+                                  {script[section.key].modeled_example || "—"}
+                                </p>
                               ) : (
-                                <EditableScript
-                                  value={scriptRewrites[i]}
-                                  onChange={(val) => updateScriptRewrite(i, val)}
+                                <EditableField
+                                  value={script[section.key].modeled_example}
+                                  onChange={(val) => updateScriptStructuredField(i, section.key, "modeled_example", val)}
+                                  className="text-sm text-zinc-200 leading-relaxed font-medium"
                                 />
                               )}
                             </div>
-                          )}
+                          ))}
                         </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </section>
-            ) : scriptRewrites.length > 0 ? (
-              <section>
-                <h2 className="text-xl font-bold text-white tracking-tight mb-6 flex items-center gap-3">
-                  <FileText className="w-5 h-5 text-emerald-400" />
-                  Roteiros
-                </h2>
-                <div className="space-y-6">
-                  {scriptRewrites.map((script, i) => (
-                    <div key={i} className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 sm:p-6">
-                      <div className="flex items-center gap-2.5 mb-4">
-                        <div className="section-number">{i + 1}</div>
-                        <span className="text-xs text-zinc-500 uppercase tracking-widest font-semibold">Roteiro</span>
                       </div>
-                      {viewOnly ? (
-                        <p className="text-sm text-zinc-300 leading-[1.8] whitespace-pre-wrap">{script}</p>
-                      ) : (
-                        <EditableScript
-                          value={script}
-                          onChange={(val) => updateScriptRewrite(i, val)}
-                        />
-                      )}
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </section>
             ) : (

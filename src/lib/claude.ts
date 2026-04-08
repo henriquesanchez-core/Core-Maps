@@ -18,42 +18,176 @@ export async function callClaude(prompt: string) {
   return '';
 }
 
-export const EXTRACT_PROFILE_PROMPT = `Com base na transcrição abaixo de uma sessão de mentoria, extraia as seguintes informações sobre o mentorado. Retorne APENAS um JSON válido, sem markdown, sem texto adicional:
+export const EXTRACT_PROFILE_PROMPT = `Você é um estrategista sênior do "Método Audience" criado por Elias Maman. Sua missão é extrair o NÚCLEO DE INFLUÊNCIA completo de um mentorado a partir da transcrição de uma sessão de diagnóstico/mentoria.
+
+O Núcleo de Influência é o mapa de comunicação estratégico que define TUDO sobre o posicionamento do mentorado: quem ele é, quem ele ajuda, qual dor resolve, quem é o inimigo, qual a solução, quais crenças defende e como se apresenta.
+
+REGRAS DE EXTRAÇÃO:
+1. O INIMIGO nunca pode ser a própria pessoa/público. Deve ser um comportamento, uma indústria, um hábito, uma mentalidade ou uma força externa que causa a dor. Ex: "o mundo de 3 segundos", "a geração mais rebelde da história", "os princípios modernos de relacionamento".
+2. As SOLUÇÕES ALTERNATIVAS são coisas que o público JÁ TENTOU e que NÃO FUNCIONARAM. São tentativas frustradas que geram identificação.
+3. A MENTIRA/CRENÇA ERRADA é algo que o público ACREDITA que é verdade mas NÃO É. Deve ser específica e gerar um "soco" de reconhecimento.
+4. O PROBLEMA FILOSÓFICO segue a estrutura "Não faz sentido [situação injusta/absurda]". Deve gerar indignação e identificação imediata.
+5. Os BENEFÍCIOS devem ser tangíveis, específicos e dimensionados — como os do Bruno Andrade: "clientes que te pagam mais, te dão menos trabalho e geram mais resultado". NÃO use termos vagos como "qualidade de vida" ou "bem-estar".
+6. As CRENÇAS CENTRAIS são frases de alto impacto que o mentorado defende e pode repetir em vários vídeos. Podem seguir estruturas como: "X vale mais que Y", "Não faz sentido X enquanto Y", "Existem dois tipos de X: os que Y e os que Z", ou frases contraintuitivas.
+7. Se algum campo não for mencionado explicitamente na transcrição, DEDUZA com inteligência a partir do contexto. Se realmente não houver informação, use null.
+
+Extraia o Núcleo de Influência completo. Retorne APENAS um JSON válido, sem markdown, sem texto adicional:
 
 {
   "nome": "nome do mentorado",
   "especialidade": "profissão ou especialidade",
-  "publico_alvo": "quem ele ajuda",
-  "dor": "a grande dor que ele resolve",
-  "inimigo": "o inimigo/causador da dor",
-  "desejo": "a transformação/desejo que entrega",
-  "nova_crenca": "a nova crença que defende"
+  "termo_proprio": "termo ou título que ele usa para se identificar (ex: 'especialista em audiência', 'a nutricionista do alto rendimento'). null se não mencionado",
+  "publico_alvo": "quem ele ajuda — seja específico (ex: 'donos de brechó', 'mulheres 40+ na menopausa', 'bons profissionais no anonimato')",
+  "nome_audiencia": "nome que dá para a audiência (ex: 'cientistas da atenção'). null se não mencionado",
+  "dor_principal": "a grande dor/problema que ele resolve — específico e emocional",
+  "inimigo": "o causador da dor — NÃO pode ser a pessoa. Deve ser um comportamento, sistema, mentalidade ou força externa",
+  "nome_inimigo": "nome 'sexy' ou marcante para o inimigo (ex: 'o século da preguiça', 'cegueira funcional', 'a maldição do diploma'). null se não mencionado",
+  "solucoes_alternativas": ["lista de coisas que o público já tentou e não funcionaram — geram identificação"],
+  "mentira_crenca_errada": "a maior mentira/crença errada que o público acredita (ex: 'seguro de vida é só para a morte', 'esteira emagrece', 'preenchimento trata flacidez')",
+  "problema_filosofico": "a frase de indignação no formato 'Não faz sentido [situação absurda]' (ex: 'Não faz sentido os bons profissionais estarem no anonimato enquanto os ruins têm voz')",
+  "solucao": "a solução que o mentorado oferece — engenharia reversa da dor (ex: 'empacotar seu conteúdo pro mundo de 3 segundos', 'se relacionar com base nos princípios de quem criou os relacionamentos')",
+  "beneficios": ["3 benefícios tangíveis e específicos que a solução gera — NÃO use termos vagos"],
+  "desejo": "a transformação/desejo maior que ele entrega",
+  "nome_metodo": "nome do método/framework, se existir. null se não mencionado",
+  "crencas_centrais": ["3-5 frases de alto impacto que o mentorado defende — crenças fortes, específicas e repetíveis em vários vídeos"],
+  "nova_crenca": "a crença central mais forte — aquela que se o público acreditar, já está mais perto de comprar",
+  "historia_emocional": "história pessoal emocionante mencionada que pode ser usada em conteúdo. null se não mencionada",
+  "provas_cases": "cases de sucesso, números ou provas de resultado mencionados. null se não mencionados"
 }
 
 TRANSCRIÇÃO:
 {{TRANSCRIPTION}}`;
 
-export const NARRATIVE_PROMPT = `Aja como um Copywriter Sênior especialista no "Método Audience" de criação de roteiros virais e posicionamento de marca. Sua missão é extrair e construir a minha "Narrativa Magnética", que é a união da ideia central que eu defendo (Narrativa) com a minha promessa de autoridade (Apresentação Magnética).
+export const NARRATIVE_PROMPT = `Você é um Copywriter Sênior do "Método Audience" criado por Elias Maman. Sua missão é construir a NARRATIVA MAGNÉTICA completa de um mentorado — isso inclui as Crenças Centrais, os Conectores de Narrativa e as Apresentações Magnéticas.
 
-A Narrativa Magnética serve para conectar o conteúdo de valor que eu entrego nos meus vídeos com o desejo do meu público, aumentando o nível de consciência deles para a minha solução e gerando vontade de me seguir e comprar de mim.
+CONTEXTO DO MÉTODO:
+No Método Audience, um Reels viral segue esta estrutura:
+HEADLINE → INTENSIFICADOR DO MISTÉRIO → CTA (salva) → CONTEÚDO NOTÁVEL → CTA (compartilha) → **CONECTOR DE NARRATIVA** → **CRENÇA/NARRATIVA** → **APRESENTAÇÃO MAGNÉTICA** → CTA FINAL (me segue)
 
-Aqui estão as informações do meu Núcleo de Influência:
+O CONECTOR é a ponte entre o conteúdo de valor e a narrativa. A NARRATIVA é a crença central sendo vendida. A APRESENTAÇÃO MAGNÉTICA é como o mentorado se apresenta no final — é o momento que transforma um espectador em seguidor.
+
+Aqui está o Núcleo de Influência completo do mentorado:
 {{NUCLEO_INFLUENCIA}}
 
-Com base nessas informações, crie 3 opções completas de "Narrativa Magnética", divididas em duas partes (como em um roteiro de Reels):
+---
 
-PARTE 1: O CONECTOR E A NARRATIVA (A Venda da Ideia)
-Crie o parágrafo de transição que vem logo após a entrega do conteúdo do vídeo. Use a estrutura de conector: "E você precisa entender o seguinte..." ou "A verdade que ninguém te conta é que...". Em seguida, apresente a minha [Nova Crença] combatendo o [Inimigo]. O objetivo aqui é vender a ideia central do meu movimento e elevar o nível de consciência da pessoa.
+Gere o seguinte conteúdo em TRÊS SEÇÕES. A linguagem deve ser NATURAL, FALADA e HUMANA — como se estivesse sendo dita em um Reels, não escrita em um artigo.
 
-PARTE 2: A APRESENTAÇÃO MAGNÉTICA
-Logo após a narrativa, crie a minha apresentação de impacto. Ela deve soar humana, direta e com autoridade. Use as seguintes estruturas validadas:
-- Opção A (Direta e Focada no Desejo): "Eu sou [Nome], especialista em [Profissão], e eu estou aqui para ajudar [Público] a [Desejo], evitando [Dor/Inimigo]."
-- Opção B (Focada na Empatia e Dor): "Meu nome é [Nome], e eu sei que você se sente [Dor/Exausto] por causa do [Inimigo]. Mas calma, eu estou aqui para te mostrar o caminho para [Desejo/Solução]."
-- Opção C (Brevidade Inteligente): Crie uma versão extremamente enxuta e de alto impacto focada na transformação real.
+═══════════════════════════════
+SEÇÃO 1: CRENÇAS CENTRAIS
+═══════════════════════════════
 
-A linguagem deve ser natural, falada, sem parecer robô.
+Gere 5 crenças de alto impacto que o mentorado pode repetir em diversos vídeos. Cada crença deve ser uma frase curta, memorável e que gere identificação ou provoque reflexão.
 
-MUITO IMPORTANTE: Retorne APENAS as 3 opções geradas. Não inclua introduções, saudações, conversas ou perguntas finais (ex: "Qual dessas opções mais ressoa com você?"). Entregue diretamente e unicamente o conteúdo final.`;
+Use estas estruturas validadas (varie entre elas):
+• "X vale mais que Y" — ex: "Audiência vale mais que dinheiro"
+• Contraintuitiva — uma verdade que contradiz o senso comum — ex: "Sofrimento não traz crescimento"
+• "Não faz sentido X enquanto Y" — ex: "Não faz sentido você ter medo de reposição hormonal se passou a vida tomando anticoncepcional"
+• "Existem dois tipos de X: os que Y e os que Z" — ex: "Existem dois tipos de mulheres: as que estimulam colágeno desde cedo e as que envelhecem"
+• Frase imperativa/ordem — ex: "Pare de falar sobre tecnologia. Comece a falar sobre o problema que a tecnologia resolve."
+• "X não é sobre Y, é sobre Z" — ex: "Brechó não é sobre escassez, é sobre uma sociedade de excessos"
+
+REGRAS:
+- Cada crença deve caber em UMA FRASE (máximo 2). Brevidade inteligente: falar menos com mais punch.
+- A crença mais forte deve ser a PRIMEIRA. É a crença central — aquela que se o público acreditar, já está mais perto de comprar.
+- As crenças devem combater o [Inimigo] e reforçar a [Solução] do mentorado.
+- NÃO use crenças genéricas que qualquer pessoa poderia falar. Devem ser específicas ao nicho.
+- Se o mentorado já tem crenças mencionadas no perfil, MELHORE-AS (mais punch, mais específicas, mais curtas).
+
+═══════════════════════════════
+SEÇÃO 2: CONECTORES DE NARRATIVA
+═══════════════════════════════
+
+Gere 3 blocos de "Conector + Narrativa" diferentes. Cada bloco é o trecho que vem LOGO APÓS o conteúdo do vídeo e ANTES da apresentação magnética.
+
+Estrutura de cada bloco:
+1. FRASE PONTE (o conector) — usa uma dessas aberturas:
+   • "E você precisa entender o seguinte..."
+   • "A verdade que ninguém te conta é que..."
+   • "Então, compartilha esse vídeo com [público] e..."
+   • "E o que eu preciso que você entenda é..."
+   • "Mas antes de sair desse vídeo, entenda uma coisa..."
+
+2. NARRATIVA (a venda da ideia) — logo após a frase ponte, apresente a crença central combatendo o [Inimigo] e elevando o nível de consciência para a [Solução]. Deve ser 2-4 frases. O tom é de convicção absoluta, como um líder de movimento.
+
+EXEMPLO DO ELIAS (para referência de tom e estrutura):
+"Então, compartilha esse vídeo com todo profissional que você conhece. E você precisa entender o seguinte: audiência vale mais que dinheiro. Porque o profissional que tem audiência nunca mais vai depender de algoritmo, de agência ou de indicação. Ele se torna o próprio canal de vendas."
+
+═══════════════════════════════
+SEÇÃO 3: APRESENTAÇÕES MAGNÉTICAS
+═══════════════════════════════
+
+Gere 5 apresentações magnéticas diferentes usando as fórmulas validadas abaixo. Cada uma deve ser COMPLETA e PRONTA PARA USAR no final de um Reels.
+
+FÓRMULA 1 — DIRETA + BENEFÍCIOS:
+"Eu sou [Nome], [profissão/especialidade], e eu estou aqui para ajudar [público] a [benefício 1], [benefício 2] e [benefício 3]."
+(Referência: Bruno Andrade — "clientes que te pagam mais, te dão menos trabalho e geram mais resultado")
+
+FÓRMULA 2 — EMPATIA + DOR (modelo Veridiana):
+"Eu sou [Nome] e eu sei que você [descrição vívida da dor/situação atual]. Por isso eu estou aqui para te mostrar o caminho para [solução/desejo]."
+(Referência: Veridiana — "eu sei que você se sente solitário e exausto por liderar a geração mais rebelde da história")
+
+FÓRMULA 3 — CRENÇA FILOSÓFICA (INDIGNAÇÃO):
+"Eu sou [Nome], [profissão]. E não faz sentido [problema filosófico/indignação]. Se você está comigo nessa, me segue que eu vou te mostrar [caminho]."
+(Referência: Elias — "Não faz sentido os bons estarem no anonimato enquanto os ruins têm alcance")
+
+FÓRMULA 4 — BREVIDADE INTELIGENTE (ultra-enxuta):
+Uma versão em NO MÁXIMO 2 frases que comunica a transformação de forma seca e poderosa. Sem enrolação.
+(Referência: "Eu sou Euriller Jubé e eu tô aqui pra te ajudar a construir o negócio digital do futuro usando as ferramentas desse século pra ganhar muito dinheiro fazendo o que Deus te chamou pra fazer.")
+
+FÓRMULA 5 — CRENÇA CENTRAL + CONVITE:
+"Eu sou [Nome], [profissão]. E [crença central mais forte]. Me segue que eu vou te provar."
+(Referência: usar a crença #1 gerada na Seção 1)
+
+REGRAS PARA TODAS AS APRESENTAÇÕES:
+- Tom HUMANO e CONVERSADO — como se estivesse falando com alguém, não lendo um texto.
+- Os benefícios devem ser TANGÍVEIS e DIMENSIONADOS (não vagos).
+- NUNCA use "qualidade de vida", "bem-estar" ou outros termos genéricos.
+- A apresentação deve fazer a pessoa pensar: "eu PRECISO seguir essa pessoa".
+- Cada apresentação deve terminar com um convite natural para seguir ("me segue que...", "se faz sentido, me acompanha aqui", etc.)
+- Aplique o princípio de BREVIDADE INTELIGENTE: falar menos, com mais punch. Se dá pra tirar uma palavra sem perder sentido, tire.
+
+═══════════════════════════════
+
+FORMATO DE SAÍDA:
+Retorne o conteúdo organizado exatamente assim, com os separadores e títulos:
+
+## CRENÇAS CENTRAIS
+1. [crença mais forte — a central]
+2. [crença 2]
+3. [crença 3]
+4. [crença 4]
+5. [crença 5]
+
+## CONECTORES DE NARRATIVA
+
+### Conector 1
+[bloco completo: frase ponte + narrativa]
+
+### Conector 2
+[bloco completo: frase ponte + narrativa]
+
+### Conector 3
+[bloco completo: frase ponte + narrativa]
+
+## APRESENTAÇÕES MAGNÉTICAS
+
+### Opção 1 — Direta + Benefícios
+[apresentação completa]
+
+### Opção 2 — Empatia + Dor
+[apresentação completa]
+
+### Opção 3 — Indignação Filosófica
+[apresentação completa]
+
+### Opção 4 — Brevidade Inteligente
+[apresentação completa]
+
+### Opção 5 — Crença Central
+[apresentação completa]
+
+MUITO IMPORTANTE: Retorne APENAS o conteúdo gerado no formato acima. Não inclua introduções, saudações, conversas, explicações ou perguntas finais. Entregue diretamente e unicamente o conteúdo final.`;
 
 export const HEADLINE_EXAMPLES_PROMPT = `Aja como um Copywriter Sênior especialista no "Método Audience" de headlines virais para Instagram/Reels.
 
@@ -80,8 +214,17 @@ Termos Virais:
 
 ---
 
-PARTE 3: ROTEIROS PERSONALIZADOS
-Para cada roteiro/estrutura abaixo, crie uma versão PERSONALIZADA e PRONTA PARA USO para o mentorado, usando seu nicho, público, dor e linguagem natural. Mantenha a estrutura do roteiro original mas adapte todo o conteúdo para o nicho do mentorado.
+PARTE 3: ESTRUTURA INVISÍVEL DO ROTEIRO + EXEMPLOS MODELADOS
+Você receberá roteiros virais já validados, que podem ser de nichos diferentes do mentorado. Para cada roteiro, extraia a ESTRUTURA INVISÍVEL e retorne APENAS estes 3 blocos:
+
+1) Headline
+2) Intensificador do mistério
+3) Primeiro tópico da lista
+
+IMPORTANTE:
+- Em "structure", descreva a engenharia/framing da frase original (sem prender em termos específicos do nicho original).
+- Em "modeled_example", escreva um exemplo pronto para uso, já adaptado ao nicho do mentorado.
+- Não retorne roteiro completo, nem tópicos extras.
 
 Roteiros:
 {{SCRIPT_STRUCTURES}}
@@ -98,8 +241,11 @@ Retorne APENAS um JSON válido, sem markdown, sem texto adicional, neste formato
     { "viral_term": "o termo viral exato", "headline_example": "a headline criada" }
   ],
   "script_rewrites": [
-    "roteiro personalizado completo 1",
-    "roteiro personalizado completo 2"
+    {
+      "headline": { "structure": "estrutura invisível da headline", "modeled_example": "headline modelada para o mentorado" },
+      "intensifier": { "structure": "estrutura invisível do intensificador", "modeled_example": "intensificador modelado para o mentorado" },
+      "first_list_topic": { "structure": "estrutura invisível do primeiro tópico da lista", "modeled_example": "primeiro tópico modelado para o mentorado" }
+    }
   ]
 }`;
 

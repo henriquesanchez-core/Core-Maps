@@ -11,14 +11,99 @@ import {
 
 export const dynamic = 'force-dynamic';
 
+type ScriptRewriteBlock = {
+  structure: string;
+  modeled_example: string;
+};
+
+type StructuredScriptRewrite = {
+  headline: ScriptRewriteBlock;
+  intensifier: ScriptRewriteBlock;
+  first_list_topic: ScriptRewriteBlock;
+};
+
+type ScriptRewriteValue = StructuredScriptRewrite | string;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function normalizeScriptRewriteBlock(value: unknown): ScriptRewriteBlock {
+  if (!isRecord(value)) {
+    return { structure: '', modeled_example: '' };
+  }
+
+  const structure = typeof value.structure === 'string' ? value.structure : '';
+  const modeledExample = typeof value.modeled_example === 'string' ? value.modeled_example : '';
+
+  return { structure, modeled_example: modeledExample };
+}
+
+function normalizeScriptRewrite(value: unknown): ScriptRewriteValue | null {
+  if (typeof value === 'string') return value;
+  if (!isRecord(value)) return null;
+
+  const hasStructuredFields = 'headline' in value || 'intensifier' in value || 'first_list_topic' in value;
+  if (!hasStructuredFields) return null;
+
+  return {
+    headline: normalizeScriptRewriteBlock(value.headline),
+    intensifier: normalizeScriptRewriteBlock(value.intensifier),
+    first_list_topic: normalizeScriptRewriteBlock(value.first_list_topic),
+  };
+}
+
+function normalizeScriptRewrites(value: unknown): ScriptRewriteValue[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map(normalizeScriptRewrite)
+    .filter((item): item is ScriptRewriteValue => item !== null);
+}
+
+function formatScriptRewriteForPlaybook(script: ScriptRewriteValue, index: number): string {
+  if (typeof script === 'string') {
+    return `--- Roteiro ${index + 1} ---\n${script}`;
+  }
+
+  return [
+    `--- Roteiro ${index + 1} ---`,
+    `Headline`,
+    `- Estrutura: ${script.headline.structure || 'N/A'}`,
+    `- Exemplo modelado: ${script.headline.modeled_example || 'N/A'}`,
+    ``,
+    `Intensificador`,
+    `- Estrutura: ${script.intensifier.structure || 'N/A'}`,
+    `- Exemplo modelado: ${script.intensifier.modeled_example || 'N/A'}`,
+    ``,
+    `Primeiro tópico da lista`,
+    `- Estrutura: ${script.first_list_topic.structure || 'N/A'}`,
+    `- Exemplo modelado: ${script.first_list_topic.modeled_example || 'N/A'}`,
+  ].join('\n');
+}
+
 function formatNucleo(profile: any) {
-  return `- Meu Nome: ${profile.nome || 'N/A'}
-- Minha Profissão/Especialidade: ${profile.especialidade || 'N/A'}
-- Quem eu ajudo (Público-Alvo): ${profile.publico_alvo || 'N/A'}
-- A grande dor que eu resolvo: ${profile.dor || 'N/A'}
-- O Inimigo/Causador dessa dor: ${profile.inimigo || 'N/A'}
-- O Desejo/Transformação que eu entrego: ${profile.desejo || 'N/A'}
-- A Nova Crença que eu defendo: ${profile.nova_crenca || 'N/A'}`;
+  const lines = [
+    `- Nome: ${profile.nome || 'N/A'}`,
+    `- Profissão/Especialidade: ${profile.especialidade || 'N/A'}`,
+    profile.termo_proprio ? `- Termo/Título: ${profile.termo_proprio}` : null,
+    `- Público-Alvo: ${profile.publico_alvo || 'N/A'}`,
+    profile.nome_audiencia ? `- Nome da Audiência: ${profile.nome_audiencia}` : null,
+    `- Dor Principal: ${profile.dor_principal || profile.dor || 'N/A'}`,
+    `- Inimigo/Causador da Dor: ${profile.inimigo || 'N/A'}`,
+    profile.nome_inimigo ? `- Nome do Inimigo: ${profile.nome_inimigo}` : null,
+    profile.solucoes_alternativas?.length > 0 ? `- O que o público já tentou (e não funcionou): ${profile.solucoes_alternativas.join('; ')}` : null,
+    profile.mentira_crenca_errada ? `- Mentira/Crença Errada do público: ${profile.mentira_crenca_errada}` : null,
+    profile.problema_filosofico ? `- Problema Filosófico (indignação): ${profile.problema_filosofico}` : null,
+    profile.solucao ? `- Solução: ${profile.solucao}` : null,
+    profile.beneficios?.length > 0 ? `- Benefícios tangíveis: ${profile.beneficios.join('; ')}` : null,
+    `- Desejo/Transformação: ${profile.desejo || 'N/A'}`,
+    profile.nome_metodo ? `- Nome do Método: ${profile.nome_metodo}` : null,
+    profile.crencas_centrais?.length > 0 ? `- Crenças Centrais: ${profile.crencas_centrais.join(' | ')}` : null,
+    `- Nova Crença principal: ${profile.nova_crenca || 'N/A'}`,
+    profile.historia_emocional ? `- História emocional: ${profile.historia_emocional}` : null,
+    profile.provas_cases ? `- Provas/Cases: ${profile.provas_cases}` : null,
+  ];
+  return lines.filter(Boolean).join('\n');
 }
 
 export async function POST(req: Request) {
@@ -88,7 +173,7 @@ export async function POST(req: Request) {
             const cleaned = result.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
             try {
               extractedProfile = JSON.parse(cleaned);
-            } catch(e) {
+            } catch {
               console.error("Nao foi possivel o parse", cleaned);
             }
           } else {
@@ -132,7 +217,10 @@ export async function POST(req: Request) {
 
             try {
               actionPlan = JSON.parse(cleaned);
-            } catch (e) {
+              if (actionPlan && typeof actionPlan === 'object') {
+                actionPlan.script_rewrites = normalizeScriptRewrites((actionPlan as any).script_rewrites);
+              }
+            } catch {
               console.error('[Generate] Failed to parse headline examples:', cleaned);
               actionPlan = {
                 headline_examples: headlineExamplesArray.map((h: string) => ({ structure: h, filled_example: '' })),
@@ -163,7 +251,7 @@ export async function POST(req: Request) {
               : headlineExamplesArray.map((h: string, i: number) => `${i + 1}. ${h}`).join('\n') || 'Nenhuma headline fornecida';
 
             const scriptText = actionPlan?.script_rewrites?.length > 0
-              ? actionPlan.script_rewrites.map((s: string, i: number) => `--- Roteiro ${i + 1} ---\n${s}`).join('\n\n')
+              ? actionPlan.script_rewrites.map((s: ScriptRewriteValue, i: number) => formatScriptRewriteForPlaybook(s, i)).join('\n\n')
               : scriptExamplesArray.map((s: string, i: number) => `--- Roteiro ${i + 1} ---\n${s}`).join('\n\n') || 'Nenhum roteiro fornecido';
 
             const videoText = Array.isArray(videoExamples) && videoExamples.length > 0

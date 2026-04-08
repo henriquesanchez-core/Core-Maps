@@ -7,11 +7,24 @@ export interface InstagramProfile {
 export interface ExtractedProfile {
   nome: string
   especialidade: string
+  termo_proprio?: string | null
   publico_alvo: string
-  dor: string
+  nome_audiencia?: string | null
+  dor?: string // backward compat
+  dor_principal?: string
   inimigo: string
+  nome_inimigo?: string | null
+  solucoes_alternativas?: string[]
+  mentira_crenca_errada?: string | null
+  problema_filosofico?: string | null
+  solucao?: string | null
+  beneficios?: string[]
   desejo: string
+  nome_metodo?: string | null
+  crencas_centrais?: string[]
   nova_crenca: string
+  historia_emocional?: string | null
+  provas_cases?: string | null
 }
 
 export interface HeadlineExample {
@@ -24,10 +37,23 @@ export interface ViralTermExample {
   headline_example: string
 }
 
+export interface ScriptRewriteBlock {
+  structure: string
+  modeled_example: string
+}
+
+export interface ScriptRewriteStructured {
+  headline: ScriptRewriteBlock
+  intensifier: ScriptRewriteBlock
+  first_list_topic: ScriptRewriteBlock
+}
+
+export type ScriptRewrite = ScriptRewriteStructured | string
+
 export interface ActionPlan {
   headline_examples: HeadlineExample[]
   viral_term_examples: ViralTermExample[]
-  script_rewrites: string[]
+  script_rewrites: ScriptRewrite[]
   playbook?: string | null
 }
 
