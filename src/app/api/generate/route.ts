@@ -120,6 +120,40 @@ function formatNucleo(profile: any) {
   return lines.filter(Boolean).join('\n');
 }
 
+async function uploadProfilePic(username: string, imageUrl: string): Promise<string | null> {
+  try {
+    const res = await fetch(imageUrl, { signal: AbortSignal.timeout(10_000) })
+    if (!res.ok) return null
+    const buffer = await res.arrayBuffer()
+    const contentType = res.headers.get('content-type') || 'image/jpeg'
+    const ext = contentType.includes('png') ? 'png' : 'jpg'
+    const path = `profiles/${username}.${ext}`
+
+    let { error } = await supabaseAdmin.storage
+      .from('avatars')
+      .upload(path, buffer, { contentType, upsert: true })
+
+    if (error?.message?.toLowerCase().includes('bucket') || error?.message?.toLowerCase().includes('not found')) {
+      await supabaseAdmin.storage.createBucket('avatars', { public: true })
+      const result = await supabaseAdmin.storage
+        .from('avatars')
+        .upload(path, buffer, { contentType, upsert: true })
+      error = result.error
+    }
+
+    if (error) {
+      console.error('[Storage] Upload error:', error)
+      return null
+    }
+
+    const { data } = supabaseAdmin.storage.from('avatars').getPublicUrl(path)
+    return data.publicUrl
+  } catch (err) {
+    console.error('[Storage] Failed to upload profile pic:', err)
+    return null
+  }
+}
+
 function normalizeStringArray(value: unknown, maxItems: number, maxLength: number): string[] {
   if (!Array.isArray(value)) return [];
 
@@ -210,6 +244,12 @@ export async function POST(req: Request) {
           })(),
         ]);
         sendProgress(2, 'Perfis buscados.');
+
+        // Upload avatar to avoid expiring Instagram CDN URLs
+        if (clientData.profilePicUrl) {
+          const storedUrl = await uploadProfilePic(cleanUsername, clientData.profilePicUrl)
+          if (storedUrl) clientData.profilePicUrl = storedUrl
+        }
 
         // STEP 3: Extract Profile from Transcription
         let extractedProfile = null;
