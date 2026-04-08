@@ -18,7 +18,7 @@ export function TagInput({ label, placeholder, tags, onChange, minItems, multili
   function addTag() {
     const value = input.trim()
     if (!value) return
-    if (tags.includes(value)) { setInput(""); return }
+    if (!multiline && tags.includes(value)) { setInput(""); return }
     onChange([...tags, value])
     setInput("")
   }
