@@ -10,8 +10,6 @@ export function GenerationForm() {
   const [currentStep, setCurrentStep] = useState(0)
   const [resultId, setResultId] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
-  const [companyName, setCompanyName] = useState("")
-  const [niche, setNiche] = useState("")
 
   // Tag-based states
   const [viralTerms, setViralTerms] = useState<string[]>([])
@@ -19,12 +17,8 @@ export function GenerationForm() {
   const [headlineExamples, setHeadlineExamples] = useState<string[]>([])
   const [scriptExamples, setScriptExamples] = useState<string[]>([])
 
-  const trimmedCompanyName = companyName.trim()
-  const trimmedNiche = niche.trim()
-  const hasCompanyName = trimmedCompanyName.length > 0
-  const hasNiche = trimmedNiche.length > 0
   const hasAtLeastOneTag = viralTerms.length > 0
-  const canSubmit = !loading && hasCompanyName && hasNiche && hasAtLeastOneTag
+  const canSubmit = !loading && hasAtLeastOneTag
 
   const steps = [
     "Instagram",
@@ -50,10 +44,7 @@ export function GenerationForm() {
 
     const formData = new FormData(e.currentTarget)
     const payload = {
-      companyName: trimmedCompanyName,
-      niche: trimmedNiche,
       tags: viralTerms,
-      painPoints: [trimmedNiche],
       clientUsername: formData.get("clientUsername"),
       referenceProfiles: formData.get("referenceProfiles"),
       transcription: formData.get("transcription"),
@@ -126,39 +117,6 @@ export function GenerationForm() {
       </h2>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Row 1: Instagram */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-zinc-400">Nome da Empresa</label>
-          <input
-            value={companyName}
-            onChange={(e) => setCompanyName(e.target.value)}
-            type="text"
-            placeholder="ex: Core Maps"
-            className={`w-full bg-zinc-950 border rounded-lg p-3 text-zinc-100 focus:outline-none focus:ring-2 transition-all ${
-              hasCompanyName ? "border-zinc-800 focus:ring-blue-500" : "border-red-500/60 focus:ring-red-500"
-            }`}
-          />
-          {!hasCompanyName && (
-            <p className="text-xs text-red-400">Informe o nome da empresa.</p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-zinc-400">Nicho</label>
-          <input
-            value={niche}
-            onChange={(e) => setNiche(e.target.value)}
-            type="text"
-            placeholder="ex: Consultoria de marketing"
-            className={`w-full bg-zinc-950 border rounded-lg p-3 text-zinc-100 focus:outline-none focus:ring-2 transition-all ${
-              hasNiche ? "border-zinc-800 focus:ring-blue-500" : "border-red-500/60 focus:ring-red-500"
-            }`}
-          />
-          {!hasNiche && (
-            <p className="text-xs text-red-400">Informe o nicho.</p>
-          )}
-        </div>
-
         <div className="space-y-2">
           <label className="text-sm font-medium text-zinc-400">@ do Instagram do Cliente</label>
           <input

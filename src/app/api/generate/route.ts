@@ -332,10 +332,7 @@ export async function POST(req: Request) {
         sendProgress(7, 'Salvando o Mapa Final no banco...');
 
         const contentInputs = {
-          companyName: validatedRequest.companyName,
-          niche: validatedRequest.niche,
           tags: validatedRequest.tags,
-          painPoints: validatedRequest.painPoints,
           videoExamples,
           headlineExamples: headlineExamplesArray,
           scriptExamples: scriptExamplesArray,
