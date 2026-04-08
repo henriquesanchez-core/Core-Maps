@@ -1,24 +1,25 @@
 import { SignJWT, jwtVerify, type JWTPayload } from 'jose'
 
-const authSecret = process.env.AUTH_SECRET
 const AUTH_COOKIE_NAME = 'auth_token'
 
-if (!authSecret || authSecret.length < 32) {
-  throw new Error('AUTH_SECRET is required and must be at least 32 characters long.')
+function getSecret(): Uint8Array {
+  const authSecret = process.env.AUTH_SECRET
+  if (!authSecret || authSecret.length < 32) {
+    throw new Error('AUTH_SECRET is required and must be at least 32 characters long.')
+  }
+  return new TextEncoder().encode(authSecret)
 }
-
-const secret = new TextEncoder().encode(authSecret)
 
 export async function createToken() {
   return new SignJWT({ role: 'admin' })
     .setProtectedHeader({ alg: 'HS256' })
     .setExpirationTime('7d')
-    .sign(secret)
+    .sign(getSecret())
 }
 
 export async function verifyToken(token: string): Promise<JWTPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, secret)
+    const { payload } = await jwtVerify(token, getSecret())
     return payload
   } catch {
     return null
