@@ -11,7 +11,7 @@ async function callClaudeOnce(prompt: string, signal?: AbortSignal): Promise<str
       max_tokens: 4096,
       messages: [{ role: 'user', content: prompt }],
     },
-    { signal, timeout: 60_000 },
+    { signal, timeout: 240_000 },
   )
   const content = message.content[0]
   if (content.type !== 'text') throw new Error('Claude retornou tipo de conteúdo inesperado')

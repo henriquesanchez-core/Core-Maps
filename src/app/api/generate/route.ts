@@ -11,6 +11,7 @@ import {
 import { GenerateRequestSchema } from '@/lib/validation';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 300; // 5 min — requer Vercel Pro
 
 type ScriptElement = {
   element_type: string;
