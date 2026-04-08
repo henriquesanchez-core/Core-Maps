@@ -12,46 +12,65 @@ import { requireAdmin } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
-type ScriptRewriteBlock = {
+type ScriptElement = {
+  element_type: string;
   structure: string;
   modeled_example: string;
 };
 
-type StructuredScriptRewrite = {
-  headline: ScriptRewriteBlock;
-  intensifier: ScriptRewriteBlock;
-  first_list_topic: ScriptRewriteBlock;
+type ScriptRewriteAnalyzed = {
+  elements: ScriptElement[];
 };
 
-type ScriptRewriteValue = StructuredScriptRewrite | string;
+type ScriptRewriteValue = ScriptRewriteAnalyzed | string;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-function normalizeScriptRewriteBlock(value: unknown): ScriptRewriteBlock {
-  if (!isRecord(value)) {
-    return { structure: '', modeled_example: '' };
-  }
-
-  const structure = typeof value.structure === 'string' ? value.structure : '';
-  const modeledExample = typeof value.modeled_example === 'string' ? value.modeled_example : '';
-
-  return { structure, modeled_example: modeledExample };
+function normalizeScriptElement(value: unknown): ScriptElement | null {
+  if (!isRecord(value)) return null;
+  return {
+    element_type: typeof value.element_type === 'string' ? value.element_type : '',
+    structure: typeof value.structure === 'string' ? value.structure : '',
+    modeled_example: typeof value.modeled_example === 'string' ? value.modeled_example : '',
+  };
 }
 
 function normalizeScriptRewrite(value: unknown): ScriptRewriteValue | null {
   if (typeof value === 'string') return value;
   if (!isRecord(value)) return null;
 
-  const hasStructuredFields = 'headline' in value || 'intensifier' in value || 'first_list_topic' in value;
-  if (!hasStructuredFields) return null;
+  // New format: { elements: [...] }
+  if ('elements' in value && Array.isArray(value.elements)) {
+    const elements = value.elements
+      .map(normalizeScriptElement)
+      .filter((e): e is ScriptElement => e !== null);
+    return { elements };
+  }
 
-  return {
-    headline: normalizeScriptRewriteBlock(value.headline),
-    intensifier: normalizeScriptRewriteBlock(value.intensifier),
-    first_list_topic: normalizeScriptRewriteBlock(value.first_list_topic),
-  };
+  // Legacy format: { headline, intensifier, first_list_topic } → convert to new format
+  if ('headline' in value || 'intensifier' in value || 'first_list_topic' in value) {
+    const elements: ScriptElement[] = [];
+    const legacyKeys = [
+      { key: 'headline', label: 'Headline' },
+      { key: 'intensifier', label: 'Intensificador' },
+      { key: 'first_list_topic', label: 'Valor Prático - Lista Numerada' },
+    ];
+    for (const { key, label } of legacyKeys) {
+      const block = value[key];
+      if (isRecord(block)) {
+        elements.push({
+          element_type: label,
+          structure: typeof block.structure === 'string' ? block.structure : '',
+          modeled_example: typeof block.modeled_example === 'string' ? block.modeled_example : '',
+        });
+      }
+    }
+    return { elements };
+  }
+
+  return null;
 }
 
 function normalizeScriptRewrites(value: unknown): ScriptRewriteValue[] {
@@ -66,20 +85,13 @@ function formatScriptRewriteForPlaybook(script: ScriptRewriteValue, index: numbe
     return `--- Roteiro ${index + 1} ---\n${script}`;
   }
 
-  return [
-    `--- Roteiro ${index + 1} ---`,
-    `Headline`,
-    `- Estrutura: ${script.headline.structure || 'N/A'}`,
-    `- Exemplo modelado: ${script.headline.modeled_example || 'N/A'}`,
-    ``,
-    `Intensificador`,
-    `- Estrutura: ${script.intensifier.structure || 'N/A'}`,
-    `- Exemplo modelado: ${script.intensifier.modeled_example || 'N/A'}`,
-    ``,
-    `Primeiro tópico da lista`,
-    `- Estrutura: ${script.first_list_topic.structure || 'N/A'}`,
-    `- Exemplo modelado: ${script.first_list_topic.modeled_example || 'N/A'}`,
-  ].join('\n');
+  const lines = [`--- Roteiro ${index + 1} ---`];
+  for (const el of script.elements) {
+    lines.push(``, `${el.element_type || 'Elemento'}`);
+    lines.push(`- Estrutura: ${el.structure || 'N/A'}`);
+    lines.push(`- Exemplo modelado: ${el.modeled_example || 'N/A'}`);
+  }
+  return lines.join('\n');
 }
 
 function formatNucleo(profile: any) {

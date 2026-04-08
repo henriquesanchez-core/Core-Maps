@@ -16,7 +16,7 @@ import type {
   ViralTermExample,
   TabAudios,
   ScriptRewrite,
-  ScriptRewriteStructured,
+  ScriptRewriteAnalyzed,
 } from "@/types/map"
 import { EditableField } from "./EditableField"
 import { EditableScript } from "./EditableScript"
@@ -47,9 +47,9 @@ function formatTime(s: number) {
   return `${m}:${sec.toString().padStart(2, "0")}`
 }
 
-function isStructuredScriptRewrite(script: unknown): script is ScriptRewriteStructured {
+function isAnalyzedScriptRewrite(script: unknown): script is ScriptRewriteAnalyzed {
   if (!script || typeof script !== "object") return false
-  return "headline" in script && "intensifier" in script && "first_list_topic" in script
+  return "elements" in script && Array.isArray((script as ScriptRewriteAnalyzed).elements)
 }
 
 function TabAudioPlayer({ url, tabId, image }: { url: string; tabId: string; image?: string | null }) {
@@ -181,6 +181,9 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
   const [saving, setSaving] = useState(false)
   const [dirty, setDirty] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const [conflictError, setConflictError] = useState(false)
+  const [clientUpdatedAt, setClientUpdatedAt] = useState<string | null>(mapData.updated_at)
 
   function copyLink() {
     const url = new URL(window.location.href)
@@ -209,12 +212,21 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
   ].filter(Boolean) as { label: string; value: string; color: string }[] : []
 
   const save = useCallback(async () => {
+    if (!clientUpdatedAt) {
+      setConflictError(false)
+      setSaveError("Não foi possível validar a versão do mapa. Recarregue a página e tente novamente.")
+      return
+    }
+
     setSaving(true)
+    setConflictError(false)
+    setSaveError(null)
     try {
-      await fetch(`/api/maps/${mapData.id}`, {
+      const response = await fetch(`/api/maps/${mapData.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          client_updated_at: clientUpdatedAt,
           action_plan: {
             headline_examples: headlineExamples,
             viral_term_examples: viralTermExamples,
@@ -223,13 +235,39 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
           },
         }),
       })
+
+      if (!response.ok) {
+        const payload = await response
+          .json()
+          .catch(() => null) as { error?: string } | null
+
+        if (response.status === 409) {
+          setConflictError(true)
+          setSaveError("Este mapa foi editado em outra sessão. Recarregue para atualizar antes de salvar novamente.")
+        } else if (response.status === 404) {
+          setSaveError("Mapa não encontrado. Recarregue a página.")
+        } else {
+          setSaveError(payload?.error || "Falha ao salvar alterações.")
+        }
+        return
+      }
+
+      const payload = await response
+        .json()
+        .catch(() => null) as { map?: { updated_at?: string | null } } | null
+
+      if (payload?.map?.updated_at) {
+        setClientUpdatedAt(payload.map.updated_at)
+      }
+
       setDirty(false)
     } catch (err) {
       console.error("Failed to save:", err)
+      setSaveError("Erro de conexão ao salvar. Tente novamente.")
     } finally {
       setSaving(false)
     }
-  }, [headlineExamples, viralTermExamples, scriptRewrites, mapData.id, mapData.action_plan?.playbook])
+  }, [headlineExamples, viralTermExamples, scriptRewrites, mapData.id, mapData.action_plan?.playbook, clientUpdatedAt])
 
   function updateHeadline(index: number, newValue: string) {
     const updated = [...headlineExamples]
@@ -253,35 +291,21 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
     setDirty(true)
   }
 
-  function updateScriptStructuredField(
-    index: number,
-    section: keyof ScriptRewriteStructured,
-    field: "structure" | "modeled_example",
+  function updateScriptElementField(
+    scriptIndex: number,
+    elementIndex: number,
+    field: "modeled_example" | "structure",
     newValue: string
   ) {
     const updated = [...scriptRewrites]
-    const script = updated[index]
-
-    if (!script || typeof script === "string") return
-
-    updated[index] = {
-      ...script,
-      [section]: {
-        ...script[section],
-        [field]: newValue,
-      },
-    }
-
+    const script = updated[scriptIndex]
+    if (!script || typeof script === "string" || !isAnalyzedScriptRewrite(script)) return
+    const elements = [...script.elements]
+    elements[elementIndex] = { ...elements[elementIndex], [field]: newValue }
+    updated[scriptIndex] = { ...script, elements }
     setScriptRewrites(updated)
     setDirty(true)
   }
-
-
-  const structuredSections: { key: keyof ScriptRewriteStructured; title: string }[] = [
-    { key: "headline", title: "Headline" },
-    { key: "intensifier", title: "Intensificador" },
-    { key: "first_list_topic", title: "Primeiro tópico da lista" },
-  ]
 
   return (
     <div className="min-h-screen bg-[#050507] text-zinc-100 font-sans selection:bg-[var(--gold)]/20">
@@ -652,7 +676,7 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
                 </h2>
                 <div className="space-y-6">
                   {scriptRewrites.map((script, i) => {
-                    if (!isStructuredScriptRewrite(script)) {
+                    if (typeof script === "string") {
                       return (
                         <div key={i} className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 sm:p-6">
                           <div className="flex items-center gap-2.5 mb-4">
@@ -678,22 +702,22 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
                           <span className="text-xs text-zinc-500 uppercase tracking-widest font-semibold">Roteiro</span>
                         </div>
                         <div className="space-y-6">
-                          {structuredSections.map((section) => (
-                            <div key={section.key}>
+                          {script.elements.map((el, j) => (
+                            <div key={j}>
                               <p className="text-xs font-bold text-[var(--gold)] uppercase tracking-widest mb-1.5">
-                                {section.title}
+                                {el.element_type || "Elemento"}
                               </p>
                               <p className="text-[11px] text-zinc-600 italic mb-2.5 pb-2.5 border-b border-white/[0.05]">
-                                {script[section.key].structure || "—"}
+                                {el.structure || "—"}
                               </p>
                               {viewOnly ? (
                                 <p className="text-sm text-zinc-200 leading-relaxed font-medium">
-                                  {script[section.key].modeled_example || "—"}
+                                  {el.modeled_example || "—"}
                                 </p>
                               ) : (
                                 <EditableField
-                                  value={script[section.key].modeled_example}
-                                  onChange={(val) => updateScriptStructuredField(i, section.key, "modeled_example", val)}
+                                  value={el.modeled_example}
+                                  onChange={(val) => updateScriptElementField(i, j, "modeled_example", val)}
                                   className="text-sm text-zinc-200 leading-relaxed font-medium"
                                 />
                               )}
@@ -752,6 +776,20 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
       </main>
 
       {/* Floating save button */}
+      {!viewOnly && saveError && (
+        <div className="fixed bottom-24 left-4 right-4 sm:left-auto sm:right-6 sm:w-[420px] z-50 rounded-xl border border-red-500/30 bg-red-950/80 px-4 py-3 text-sm text-red-100 shadow-lg">
+          <p>{saveError}</p>
+          {conflictError && (
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-2 inline-flex items-center rounded-md border border-red-300/50 px-3 py-1.5 text-xs font-semibold text-red-50 hover:bg-red-900/60 transition-colors cursor-pointer"
+            >
+              Recarregar mapa
+            </button>
+          )}
+        </div>
+      )}
+
       {dirty && !viewOnly && (
         <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 z-50">
           <button

@@ -37,18 +37,17 @@ export interface ViralTermExample {
   headline_example: string
 }
 
-export interface ScriptRewriteBlock {
+export interface ScriptElement {
+  element_type: string
   structure: string
   modeled_example: string
 }
 
-export interface ScriptRewriteStructured {
-  headline: ScriptRewriteBlock
-  intensifier: ScriptRewriteBlock
-  first_list_topic: ScriptRewriteBlock
+export interface ScriptRewriteAnalyzed {
+  elements: ScriptElement[]
 }
 
-export type ScriptRewrite = ScriptRewriteStructured | string
+export type ScriptRewrite = ScriptRewriteAnalyzed | string
 
 export interface ActionPlan {
   headline_examples: HeadlineExample[]
@@ -61,6 +60,7 @@ export type TabAudios = Record<string, string | null>
 
 export interface MapData {
   id: string
+  updated_at: string | null
   client_username: string
   client_data: InstagramProfile
   references_data: InstagramProfile[]

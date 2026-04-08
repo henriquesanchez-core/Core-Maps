@@ -229,17 +229,71 @@ Termos Virais:
 
 ---
 
-PARTE 3: ESTRUTURA INVISÍVEL DO ROTEIRO + EXEMPLOS MODELADOS
-Você receberá roteiros virais já validados, que podem ser de nichos diferentes do mentorado. Para cada roteiro, extraia a ESTRUTURA INVISÍVEL e retorne APENAS estes 3 blocos:
+PARTE 3: ANÁLISE DE ESTRUTURA INVISÍVEL DO ROTEIRO (MÉTODO AUDIENCE)
+Você receberá roteiros virais já validados, que podem ser de nichos diferentes do mentorado. Para cada roteiro, analise a ESTRUTURA INVISÍVEL COMPLETA usando a taxonomia do Método Audience criado por Elias Maman.
 
-1) Headline
-2) Intensificador do mistério
-3) Primeiro tópico da lista
+TAXONOMIA DO MÉTODO AUDIENCE — ELEMENTOS QUE PODEM APARECER:
 
-IMPORTANTE:
-- Em "structure", descreva a engenharia/framing da frase original (sem prender em termos específicos do nicho original).
-- Em "modeled_example", escreva um exemplo pronto para uso, já adaptado ao nicho do mentorado.
-- Não retorne roteiro completo, nem tópicos extras.
+• Headline — frase de abertura que captura atenção em 0-3 segundos
+  Subtipos: Promessa Direta, Contraintuitiva, Número + Benefício, Pergunta Retórica, Afirmação Polêmica, Identificação Direta
+
+• Intensificador — elemento logo após a headline que prende o espectador e evita o skip
+  Subtipos:
+  - Intensificador de Mistério: cria curiosidade sobre o que vem a seguir
+  - Intensificador de Desejo: amplifica o desejo pelo resultado
+  - Intensificador de Medo: aciona o medo de perder ou errar
+  - Intensificador de Reconhecimento: faz o público se sentir visto/entendido
+  - Intensificador de Crença: desafia ou reforça uma crença do público
+  - Intensificador de Autoridade: estabelece credibilidade do criador
+
+• CTA — convite à ação dentro do conteúdo
+  Subtipos:
+  - CTA de Salvamento: "salva esse vídeo porque..."
+  - CTA de Compartilhamento: "manda pra [pessoa] que..."
+  - CTA de Comentário: "comenta aqui [X] se você [Y]..."
+
+• Valor Prático — o conteúdo de valor central do vídeo
+  Subtipos:
+  - Valor Prático - Lista Numerada: X coisas/passos/erros numerados
+  - Valor Prático - Checklist: lista de verificação com critérios
+  - Valor Prático - Dica Rápida: um insight único, direto e aplicável
+  - Valor Prático - Mini Tutorial: passo a passo simplificado
+  - Valor Prático - Modelo Pronto: template/script/fórmula copiável
+  - Valor Prático - Comparativo: X vs Y ou antes e depois
+  - Valor Prático - Lista com Argumentação: cada item tem justificativa
+
+• Ponto de Identificação — frase que faz o público dizer "isso sou eu"
+  Conecta com a dor, situação ou desejo do público de forma específica e visceral
+
+• Prova Social — evidência de resultado ou autoridade
+  Subtipos:
+  - Prova - Números e Estatísticas
+  - Prova - Case de Resultado
+  - Prova - Depoimento
+  - Prova - Fato Comprovado (dado científico ou referência externa)
+
+• Disrupção — elemento que quebra padrão e gera engajamento
+  Subtipos:
+  - Disrupção Contraintuitiva: afirmação que contradiz o senso comum
+  - Disrupção de Controle: devolve o poder ao espectador ("não precisa de X para Y")
+  - Disrupção Polêmica: posicionamento forte e divisivo (mas verdadeiro)
+
+• Storytelling — narrativa pessoal ou de terceiro que gera emoção e identificação
+
+• Conector de Narrativa — ponte entre o conteúdo e o posicionamento do criador
+  Ex: "E você precisa entender o seguinte...", "A verdade que ninguém te conta é que..."
+
+• Crença Central — a ideia/filosofia que o criador defende e quer plantar no público
+
+• Apresentação Magnética — como o criador se apresenta e convida ao follow no final
+
+INSTRUÇÕES DE ANÁLISE:
+1. Leia o roteiro inteiro antes de analisar
+2. Identifique TODOS os elementos presentes — não force elementos que não existem, mas não pule nenhum que exista
+3. Para elementos com subtipo, use o nome composto (ex: "Intensificador de Mistério", "Valor Prático - Lista Numerada")
+4. Em "structure": descreva o PRINCÍPIO INVISÍVEL e a engenharia da frase, de forma abstrata e transferível para qualquer nicho
+5. Em "modeled_example": escreva um exemplo concreto e pronto para uso, já adaptado ao nicho do mentorado
+6. Mantenha a ORDEM dos elementos como aparecem no roteiro original
 
 Roteiros:
 {{SCRIPT_STRUCTURES}}
@@ -257,9 +311,10 @@ Retorne APENAS um JSON válido, sem markdown, sem texto adicional, neste formato
   ],
   "script_rewrites": [
     {
-      "headline": { "structure": "estrutura invisível da headline", "modeled_example": "headline modelada para o mentorado" },
-      "intensifier": { "structure": "estrutura invisível do intensificador", "modeled_example": "intensificador modelado para o mentorado" },
-      "first_list_topic": { "structure": "estrutura invisível do primeiro tópico da lista", "modeled_example": "primeiro tópico modelado para o mentorado" }
+      "elements": [
+        { "element_type": "Headline", "structure": "princípio invisível da frase", "modeled_example": "exemplo adaptado ao nicho do mentorado" },
+        { "element_type": "Intensificador de Mistério", "structure": "princípio invisível", "modeled_example": "exemplo adaptado" }
+      ]
     }
   ]
 }`;
