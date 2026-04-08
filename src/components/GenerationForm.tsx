@@ -9,6 +9,7 @@ export function GenerationForm() {
   const [progressMsg, setProgressMsg] = useState("")
   const [currentStep, setCurrentStep] = useState(0)
   const [resultId, setResultId] = useState<string | null>(null)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [companyName, setCompanyName] = useState("")
   const [niche, setNiche] = useState("")
 
@@ -45,6 +46,7 @@ export function GenerationForm() {
     setResultId(null)
     setCurrentStep(0)
     setProgressMsg("Iniciando geração...")
+    setErrorMsg(null)
 
     const formData = new FormData(e.currentTarget)
     const payload = {
@@ -109,7 +111,7 @@ export function GenerationForm() {
         }
       }
     } catch (err: any) {
-      setProgressMsg("Erro ao processar: " + err.message)
+      setErrorMsg("Erro ao processar: " + err.message)
     } finally {
       setLoading(false)
     }
@@ -250,6 +252,13 @@ export function GenerationForm() {
           )}
         </button>
       </form>
+
+      {/* Error View */}
+      {errorMsg && (
+        <div className="mt-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+          {errorMsg}
+        </div>
+      )}
 
       {/* Progress View */}
       {(loading || currentStep > 0) && (

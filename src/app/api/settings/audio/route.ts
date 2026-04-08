@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin, supabasePublic } from '@/lib/supabase'
 import { requireAdmin } from '@/lib/auth'
+import { ALL_TAB_IDS, MAX_AUDIO_UPLOAD_BYTES } from '@/lib/constants'
+import { AudioUploadSchema, TabIdSchema } from '@/lib/validation'
 
-const VALID_TABS = ['nucleo', 'virais', 'referencias', 'headlines', 'roteiro', 'playbook', 'speaker_image']
 const STORAGE_PUBLIC_PREFIX = '/storage/v1/object/public/audios/'
 
 function getStoragePathFromPublicUrl(audioUrl: string): string | null {
@@ -27,7 +28,7 @@ export async function GET() {
   }
 
   const audios: Record<string, string | null> = {}
-  for (const tab of VALID_TABS) {
+  for (const tab of ALL_TAB_IDS) {
     audios[tab] = data?.find((r) => r.tab_id === tab)?.audio_url ?? null
   }
 
@@ -43,16 +44,35 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to validate authentication.' }, { status: 500 })
   }
 
-  const formData = await req.formData()
-  const tabId = formData.get('tab_id') as string
-  const file = formData.get('file') as File | null
+  const contentLength = req.headers.get('content-length')
+  if (contentLength) {
+    const parsedLength = Number(contentLength)
+    if (!Number.isFinite(parsedLength) || parsedLength < 0) {
+      return NextResponse.json({ error: 'Content-Length inválido' }, { status: 400 })
+    }
+    if (parsedLength > MAX_AUDIO_UPLOAD_BYTES) {
+      return NextResponse.json(
+        { error: 'Arquivo excede o limite máximo de 10MB.' },
+        { status: 413 }
+      )
+    }
+  }
 
-  if (!tabId || !VALID_TABS.includes(tabId)) {
-    return NextResponse.json({ error: 'tab_id inválido' }, { status: 400 })
+  const formData = await req.formData()
+  const parsedUpload = AudioUploadSchema.safeParse({
+    tab: formData.get('tab_id'),
+    file: formData.get('file'),
+  })
+
+  if (!parsedUpload.success) {
+    return NextResponse.json(
+      { error: 'Invalid upload payload', details: parsedUpload.error.flatten() },
+      { status: 400 }
+    )
   }
-  if (!file) {
-    return NextResponse.json({ error: 'Arquivo obrigatório' }, { status: 400 })
-  }
+
+  const tabId = parsedUpload.data.tab
+  const file = parsedUpload.data.file
 
   const { data: existingAudio, error: existingAudioError } = await supabaseAdmin
     .from('tab_audios')
@@ -148,11 +168,15 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to validate authentication.' }, { status: 500 })
   }
 
-  const { tab_id: tabId } = await req.json()
-
-  if (!tabId || !VALID_TABS.includes(tabId)) {
-    return NextResponse.json({ error: 'tab_id inválido' }, { status: 400 })
+  const body = await req.json().catch(() => null) as { tab_id?: unknown } | null
+  const parsedTab = TabIdSchema.safeParse(body?.tab_id)
+  if (!parsedTab.success) {
+    return NextResponse.json(
+      { error: 'tab_id inválido', details: parsedTab.error.flatten() },
+      { status: 400 }
+    )
   }
+  const tabId = parsedTab.data
 
   // Get current audio URL to delete from storage
   const { data: row, error: selectError } = await supabaseAdmin

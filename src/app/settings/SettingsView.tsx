@@ -18,20 +18,21 @@ import {
   ImageIcon,
 } from "lucide-react"
 import Link from "next/link"
+import { MAP_TAB_IDS, TAB_IDS, type MapTabId, type TabId } from "@/lib/constants"
 
-const TAB_META: Record<string, { label: string; icon: React.ElementType }> = {
-  nucleo: { label: "Núcleo Estratégico", icon: Target },
-  virais: { label: "Termos Virais", icon: Flame },
-  referencias: { label: "Referências", icon: Users },
-  headlines: { label: "Headlines", icon: Lightbulb },
-  roteiro: { label: "Roteiros", icon: Video },
-  playbook: { label: "Playbook 15 Dias", icon: BookOpen },
+const TAB_META: Record<MapTabId, { label: string; icon: React.ElementType }> = {
+  [TAB_IDS.nucleo]: { label: "Núcleo Estratégico", icon: Target },
+  [TAB_IDS.virais]: { label: "Termos Virais", icon: Flame },
+  [TAB_IDS.referencias]: { label: "Referências", icon: Users },
+  [TAB_IDS.headlines]: { label: "Headlines", icon: Lightbulb },
+  [TAB_IDS.roteiro]: { label: "Roteiros", icon: Video },
+  [TAB_IDS.playbook]: { label: "Playbook 15 Dias", icon: BookOpen },
 }
 
-const TABS = Object.keys(TAB_META)
+const TABS = MAP_TAB_IDS
 
 interface Props {
-  initialAudios: Record<string, string | null>
+  initialAudios: Record<MapTabId, string | null>
   initialSpeakerImage: string | null
 }
 
@@ -39,12 +40,19 @@ export function SettingsView({ initialAudios, initialSpeakerImage }: Props) {
   const router = useRouter()
   const [audios, setAudios] = useState(initialAudios)
   const [speakerImage, setSpeakerImage] = useState(initialSpeakerImage)
-  const [uploading, setUploading] = useState<string | null>(null)
-  const [deleting, setDeleting] = useState<string | null>(null)
-  const fileRefs = useRef<Record<string, HTMLInputElement | null>>({})
+  const [uploading, setUploading] = useState<TabId | null>(null)
+  const [deleting, setDeleting] = useState<TabId | null>(null)
+  const fileRefs = useRef<Record<MapTabId, HTMLInputElement | null>>({
+    [TAB_IDS.nucleo]: null,
+    [TAB_IDS.virais]: null,
+    [TAB_IDS.referencias]: null,
+    [TAB_IDS.headlines]: null,
+    [TAB_IDS.roteiro]: null,
+    [TAB_IDS.playbook]: null,
+  })
   const imageRef = useRef<HTMLInputElement | null>(null)
 
-  async function handleUpload(tabId: string, file: File) {
+  async function handleUpload(tabId: TabId, file: File) {
     setUploading(tabId)
     try {
       const form = new FormData()
@@ -55,7 +63,7 @@ export function SettingsView({ initialAudios, initialSpeakerImage }: Props) {
       const data = await res.json()
 
       if (res.ok) {
-        if (tabId === "speaker_image") {
+        if (tabId === TAB_IDS.speaker_image) {
           setSpeakerImage(data.audio_url)
         } else {
           setAudios((prev) => ({ ...prev, [tabId]: data.audio_url }))
@@ -70,8 +78,8 @@ export function SettingsView({ initialAudios, initialSpeakerImage }: Props) {
     }
   }
 
-  async function handleDelete(tabId: string) {
-    if (!confirm(tabId === "speaker_image" ? "Remover imagem?" : "Remover áudio desta aba?")) return
+  async function handleDelete(tabId: TabId) {
+    if (!confirm(tabId === TAB_IDS.speaker_image ? "Remover imagem?" : "Remover áudio desta aba?")) return
     setDeleting(tabId)
     try {
       const res = await fetch("/api/settings/audio", {
@@ -80,7 +88,7 @@ export function SettingsView({ initialAudios, initialSpeakerImage }: Props) {
         body: JSON.stringify({ tab_id: tabId }),
       })
       if (res.ok) {
-        if (tabId === "speaker_image") {
+        if (tabId === TAB_IDS.speaker_image) {
           setSpeakerImage(null)
         } else {
           setAudios((prev) => ({ ...prev, [tabId]: null }))
@@ -99,8 +107,8 @@ export function SettingsView({ initialAudios, initialSpeakerImage }: Props) {
     router.refresh()
   }
 
-  const isUploadingImage = uploading === "speaker_image"
-  const isDeletingImage = deleting === "speaker_image"
+  const isUploadingImage = uploading === TAB_IDS.speaker_image
+  const isDeletingImage = deleting === TAB_IDS.speaker_image
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-200 p-4 md:p-8 font-sans">
@@ -166,7 +174,7 @@ export function SettingsView({ initialAudios, initialSpeakerImage }: Props) {
 
               {speakerImage && (
                 <button
-                  onClick={() => handleDelete("speaker_image")}
+                  onClick={() => handleDelete(TAB_IDS.speaker_image)}
                   disabled={isDeletingImage}
                   className="text-zinc-500 hover:text-red-400 transition-colors cursor-pointer"
                 >
@@ -186,7 +194,7 @@ export function SettingsView({ initialAudios, initialSpeakerImage }: Props) {
               className="hidden"
               onChange={(e) => {
                 const file = e.target.files?.[0]
-                if (file) handleUpload("speaker_image", file)
+                if (file) handleUpload(TAB_IDS.speaker_image, file)
                 e.target.value = ""
               }}
             />

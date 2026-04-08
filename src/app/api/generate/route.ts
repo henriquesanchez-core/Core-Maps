@@ -9,6 +9,7 @@ import {
   PLAYBOOK_PROMPT,
 } from '@/lib/claude';
 import { requireAdmin } from '@/lib/auth';
+import { GenerateRequestSchema } from '@/lib/validation';
 
 export const dynamic = 'force-dynamic';
 
@@ -119,6 +120,17 @@ function formatNucleo(profile: any) {
   return lines.filter(Boolean).join('\n');
 }
 
+function normalizeStringArray(value: unknown, maxItems: number, maxLength: number): string[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .filter((item): item is string => typeof item === 'string')
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .slice(0, maxItems)
+    .map((item) => item.slice(0, maxLength));
+}
+
 export async function POST(req: Request) {
   try {
     await requireAdmin(req);
@@ -134,7 +146,22 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'JSON inválido no body' }, { status: 400 });
   }
 
-  const { clientUsername, referenceProfiles, transcription, viralTerms, videoExamples, headlineExamples, scriptExamples } = body;
+  const parsedRequest = GenerateRequestSchema.safeParse(body);
+  if (!parsedRequest.success) {
+    return NextResponse.json(
+      { error: 'Invalid request body', details: parsedRequest.error.flatten() },
+      { status: 400 }
+    );
+  }
+
+  const validatedRequest = parsedRequest.data;
+  const clientUsername = typeof body.clientUsername === 'string' ? body.clientUsername.trim() : '';
+  const referenceProfiles = typeof body.referenceProfiles === 'string' ? body.referenceProfiles.slice(0, 5000) : '';
+  const transcription = typeof body.transcription === 'string' ? body.transcription.slice(0, 30000) : '';
+  const videoExamples = normalizeStringArray(body.videoExamples, 20, 300);
+  const headlineExamples = normalizeStringArray(body.headlineExamples, 20, 200);
+  const scriptExamples = normalizeStringArray(body.scriptExamples, 20, 1200);
+  const viralTerms = validatedRequest.tags;
 
   if (!clientUsername) {
     return NextResponse.json({ error: 'Username do cliente é obrigatório' }, { status: 400 });
@@ -221,9 +248,9 @@ export async function POST(req: Request) {
         }
 
         // STEP 5: Generate headline/viral/script examples
-        const viralTermsArray = Array.isArray(viralTerms) ? viralTerms : [];
-        const headlineExamplesArray = Array.isArray(headlineExamples) ? headlineExamples : [];
-        const scriptExamplesArray = Array.isArray(scriptExamples) ? scriptExamples : [];
+        const viralTermsArray = viralTerms;
+        const headlineExamplesArray = headlineExamples;
+        const scriptExamplesArray = scriptExamples;
 
         let actionPlan = null;
         const hasInputs = extractedProfile && (headlineExamplesArray.length > 0 || viralTermsArray.length > 0 || scriptExamplesArray.length > 0);
@@ -283,7 +310,7 @@ export async function POST(req: Request) {
             ? actionPlan.script_rewrites.map((s: ScriptRewriteValue, i: number) => formatScriptRewriteForPlaybook(s, i)).join('\n\n')
             : scriptExamplesArray.map((s: string, i: number) => `--- Roteiro ${i + 1} ---\n${s}`).join('\n\n') || 'Nenhum roteiro fornecido';
 
-          const videoText = Array.isArray(videoExamples) && videoExamples.length > 0
+          const videoText = videoExamples.length > 0
             ? videoExamples.map((v: string, i: number) => `${i + 1}. ${v}`).join('\n')
             : 'Nenhum vídeo de referência fornecido';
 
@@ -305,7 +332,11 @@ export async function POST(req: Request) {
         sendProgress(7, 'Salvando o Mapa Final no banco...');
 
         const contentInputs = {
-          videoExamples: Array.isArray(videoExamples) ? videoExamples : [],
+          companyName: validatedRequest.companyName,
+          niche: validatedRequest.niche,
+          tags: validatedRequest.tags,
+          painPoints: validatedRequest.painPoints,
+          videoExamples,
           headlineExamples: headlineExamplesArray,
           scriptExamples: scriptExamplesArray,
         };

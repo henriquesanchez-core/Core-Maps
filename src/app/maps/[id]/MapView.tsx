@@ -18,27 +18,26 @@ import type {
   ScriptRewrite,
   ScriptRewriteAnalyzed,
 } from "@/types/map"
+import { TAB_IDS, type MapTabId } from "@/lib/constants"
 import { EditableField } from "./EditableField"
 import { EditableScript } from "./EditableScript"
 
 const TABS = [
-  { id: "nucleo", label: "Núcleo", icon: Target },
-  { id: "virais", label: "Termos Virais", icon: Flame },
-  { id: "referencias", label: "Referências", icon: Users },
-  { id: "headlines", label: "Headlines", icon: Type },
-  { id: "roteiro", label: "Roteiro", icon: FileText },
-  { id: "playbook", label: "Próximos Passos", icon: CalendarDays },
+  { id: TAB_IDS.nucleo, label: "Núcleo", icon: Target },
+  { id: TAB_IDS.virais, label: "Termos Virais", icon: Flame },
+  { id: TAB_IDS.referencias, label: "Referências", icon: Users },
+  { id: TAB_IDS.headlines, label: "Headlines", icon: Type },
+  { id: TAB_IDS.roteiro, label: "Roteiro", icon: FileText },
+  { id: TAB_IDS.playbook, label: "Próximos Passos", icon: CalendarDays },
 ] as const
 
-type TabId = (typeof TABS)[number]["id"]
-
-const TAB_AUDIO_LABELS: Record<string, string> = {
-  nucleo: "Núcleo de Influência",
-  virais: "Termos Virais",
-  referencias: "Referências Estratégicas",
-  headlines: "Estruturas de Headline",
-  roteiro: "Estruturas de Roteiro",
-  playbook: "Seu Playbook de 15 Dias",
+const TAB_AUDIO_LABELS: Record<MapTabId, string> = {
+  [TAB_IDS.nucleo]: "Núcleo de Influência",
+  [TAB_IDS.virais]: "Termos Virais",
+  [TAB_IDS.referencias]: "Referências Estratégicas",
+  [TAB_IDS.headlines]: "Estruturas de Headline",
+  [TAB_IDS.roteiro]: "Estruturas de Roteiro",
+  [TAB_IDS.playbook]: "Seu Playbook de 15 Dias",
 }
 
 function formatTime(s: number) {
@@ -52,7 +51,7 @@ function isAnalyzedScriptRewrite(script: unknown): script is ScriptRewriteAnalyz
   return "elements" in script && Array.isArray((script as ScriptRewriteAnalyzed).elements)
 }
 
-function TabAudioPlayer({ url, tabId, image }: { url: string; tabId: string; image?: string | null }) {
+function TabAudioPlayer({ url, tabId, image }: { url: string; tabId: MapTabId; image?: string | null }) {
   const label = TAB_AUDIO_LABELS[tabId] || "esta seção"
   const audioRef = useRef<HTMLAudioElement>(null)
   const [playing, setPlaying] = useState(false)
@@ -168,7 +167,7 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
   const searchParams = useSearchParams()
   const viewOnly = searchParams.get("v") === "1"
 
-  const [activeTab, setActiveTab] = useState<TabId>("nucleo")
+  const [activeTab, setActiveTab] = useState<MapTabId>(TAB_IDS.nucleo)
   const [headlineExamples, setHeadlineExamples] = useState<HeadlineExample[]>(
     mapData.action_plan?.headline_examples ?? []
   )
@@ -194,22 +193,32 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
   }
 
   const profile = mapData.extracted_profile
+  const beneficios = profile?.beneficios ?? []
+  const crencasCentrais = profile?.crencas_centrais ?? []
+  const solucoesAlternativas = profile?.solucoes_alternativas ?? []
   const nucleoFields = profile ? [
     { label: "Especialidade", value: profile.termo_proprio || profile.especialidade, color: "text-white" },
     { label: "Público Alvo", value: profile.publico_alvo, color: "text-white" },
     { label: "Dor que Resolve", value: profile.dor_principal || profile.dor, color: "text-white" },
     { label: "Inimigo Comum", value: profile.nome_inimigo ? `${profile.inimigo} ("${profile.nome_inimigo}")` : profile.inimigo, color: "text-red-400" },
     profile.solucao ? { label: "Solução", value: profile.solucao, color: "text-emerald-400" } : null,
-    profile.beneficios?.length > 0 ? { label: "Benefícios", value: profile.beneficios.join(" • "), color: "text-emerald-400" } : null,
+    beneficios.length > 0 ? { label: "Benefícios", value: beneficios.join(" • "), color: "text-emerald-400" } : null,
     { label: "Desejo / Transformação", value: profile.desejo, color: "text-emerald-400" },
     profile.mentira_crenca_errada ? { label: "Mentira que o Público Acredita", value: profile.mentira_crenca_errada, color: "text-orange-400" } : null,
     profile.problema_filosofico ? { label: "Indignação", value: profile.problema_filosofico, color: "text-orange-400" } : null,
     { label: "Nova Crença", value: profile.nova_crenca, color: "text-[var(--gold-light)]" },
-    profile.crencas_centrais?.length > 0 ? { label: "Crenças Centrais", value: profile.crencas_centrais.join(" | "), color: "text-[var(--gold-light)]" } : null,
+    crencasCentrais.length > 0 ? { label: "Crenças Centrais", value: crencasCentrais.join(" | "), color: "text-[var(--gold-light)]" } : null,
     profile.nome_metodo ? { label: "Método", value: profile.nome_metodo, color: "text-[var(--gold)]" } : null,
-    profile.solucoes_alternativas?.length > 0 ? { label: "O que já tentaram", value: profile.solucoes_alternativas.join("; "), color: "text-zinc-400" } : null,
+    solucoesAlternativas.length > 0 ? { label: "O que já tentaram", value: solucoesAlternativas.join("; "), color: "text-zinc-400" } : null,
     profile.provas_cases ? { label: "Provas / Cases", value: profile.provas_cases, color: "text-zinc-400" } : null,
   ].filter(Boolean) as { label: string; value: string; color: string }[] : []
+
+  const nucleoAudio = tabAudios[TAB_IDS.nucleo]
+  const viraisAudio = tabAudios[TAB_IDS.virais]
+  const referenciasAudio = tabAudios[TAB_IDS.referencias]
+  const headlinesAudio = tabAudios[TAB_IDS.headlines]
+  const roteiroAudio = tabAudios[TAB_IDS.roteiro]
+  const playbookAudio = tabAudios[TAB_IDS.playbook]
 
   const save = useCallback(async () => {
     if (!clientUpdatedAt) {
@@ -398,9 +407,11 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
       <main className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
 
         {/* ═══ TAB: Núcleo de Influência ═══ */}
-        {activeTab === "nucleo" && (
+        {activeTab === TAB_IDS.nucleo && (
           <div className="space-y-12 animate-fade-up">
-            {tabAudios.nucleo && <TabAudioPlayer url={tabAudios.nucleo} tabId="nucleo" image={speakerImage} />}
+            {typeof nucleoAudio === "string" && (
+              <TabAudioPlayer url={nucleoAudio} tabId={TAB_IDS.nucleo} image={speakerImage} />
+            )}
             {/* Núcleo de Influência */}
             {profile && (
               <section>
@@ -454,9 +465,11 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
         )}
 
         {/* ═══ TAB: Termos Virais ═══ */}
-        {activeTab === "virais" && (
+        {activeTab === TAB_IDS.virais && (
           <div className="space-y-10 animate-fade-up">
-            {tabAudios.virais && <TabAudioPlayer url={tabAudios.virais} tabId="virais" image={speakerImage} />}
+            {typeof viraisAudio === "string" && (
+              <TabAudioPlayer url={viraisAudio} tabId={TAB_IDS.virais} image={speakerImage} />
+            )}
             {/* Termos Virais */}
             {(mapData.viral_terms.length > 0 || viralTermExamples.length > 0) ? (
               <>
@@ -520,9 +533,15 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
         )}
 
         {/* ═══ TAB: Referências ═══ */}
-        {activeTab === "referencias" && (
+        {activeTab === TAB_IDS.referencias && (
           <div className="space-y-10 animate-fade-up">
-            {tabAudios.referencias && <TabAudioPlayer url={tabAudios.referencias} tabId="referencias" image={speakerImage} />}
+            {typeof referenciasAudio === "string" && (
+              <TabAudioPlayer
+                url={referenciasAudio}
+                tabId={TAB_IDS.referencias}
+                image={speakerImage}
+              />
+            )}
             {/* Perfis de Referência */}
             {mapData.references_data.length > 0 && (
               <section>
@@ -600,9 +619,11 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
         )}
 
         {/* ═══ TAB: Headlines ═══ */}
-        {activeTab === "headlines" && (
+        {activeTab === TAB_IDS.headlines && (
           <div className="space-y-10 animate-fade-up">
-            {tabAudios.headlines && <TabAudioPlayer url={tabAudios.headlines} tabId="headlines" image={speakerImage} />}
+            {typeof headlinesAudio === "string" && (
+              <TabAudioPlayer url={headlinesAudio} tabId={TAB_IDS.headlines} image={speakerImage} />
+            )}
             {headlineExamples.length > 0 ? (
               <section>
                 <h2 className="text-xl font-bold text-white tracking-tight mb-6 flex items-center gap-3">
@@ -665,9 +686,11 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
         )}
 
         {/* ═══ TAB: Roteiro ═══ */}
-        {activeTab === "roteiro" && (
+        {activeTab === TAB_IDS.roteiro && (
           <div className="space-y-10 animate-fade-up">
-            {tabAudios.roteiro && <TabAudioPlayer url={tabAudios.roteiro} tabId="roteiro" image={speakerImage} />}
+            {typeof roteiroAudio === "string" && (
+              <TabAudioPlayer url={roteiroAudio} tabId={TAB_IDS.roteiro} image={speakerImage} />
+            )}
             {scriptRewrites.length > 0 ? (
               <section>
                 <h2 className="text-xl font-bold text-white tracking-tight mb-6 flex items-center gap-3">
@@ -739,9 +762,11 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
         )}
 
         {/* ═══ TAB: Próximos Passos (Playbook) ═══ */}
-        {activeTab === "playbook" && (
+        {activeTab === TAB_IDS.playbook && (
           <div className="animate-fade-up">
-            {tabAudios.playbook && <TabAudioPlayer url={tabAudios.playbook} tabId="playbook" image={speakerImage} />}
+            {typeof playbookAudio === "string" && (
+              <TabAudioPlayer url={playbookAudio} tabId={TAB_IDS.playbook} image={speakerImage} />
+            )}
             {mapData.action_plan?.playbook ? (
               <section>
                 <h2 className="text-xl font-bold text-white tracking-tight mb-6 flex items-center gap-3">

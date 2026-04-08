@@ -2,14 +2,65 @@ import { supabasePublic } from "@/lib/supabase"
 import Link from "next/link"
 import type { Metadata } from "next"
 import type { MapData, TabAudios } from "@/types/map"
+import { TAB_IDS } from "@/lib/constants"
 import { MapView } from "./MapView"
 
 export const revalidate = 0;
 
-function parseJsonSafe(str: any, fallback: any = null) {
-  if (!str) return fallback
-  if (typeof str !== 'string') return str
-  try { return JSON.parse(str) } catch { return fallback }
+type JsonParseIssue = {
+  field: string
+  rawValue: string
+  fallbackUsed: string
+}
+
+function toRawPreview(value: unknown): string {
+  if (typeof value === "string") return value
+  try {
+    return JSON.stringify(value)
+  } catch {
+    return String(value)
+  }
+}
+
+function parseJsonField<T>(mapId: string, field: string, rawValue: unknown, fallback: T, fallbackLabel: string): { value: T; issue?: JsonParseIssue } {
+  if (rawValue === null || rawValue === undefined || rawValue === "") {
+    return { value: fallback }
+  }
+  if (typeof rawValue !== "string") {
+    return { value: rawValue as T }
+  }
+
+  try {
+    return { value: JSON.parse(rawValue) as T }
+  } catch (error) {
+    const rawPreview = toRawPreview(rawValue).slice(0, 2000)
+    console.error("[MapPage] JSON parse failed", {
+      mapId,
+      field,
+      rawValue: rawPreview,
+      error: error instanceof Error ? error.message : String(error),
+    })
+    return {
+      value: fallback,
+      issue: {
+        field,
+        rawValue: rawPreview,
+        fallbackUsed: fallbackLabel,
+      },
+    }
+  }
+}
+
+function toStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  return value
+    .filter((item): item is string => typeof item === "string")
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -49,15 +100,65 @@ export default async function MapPage({ params }: { params: Promise<{ id: string
   }
 
   // Parse all JSON fields
-  const viralTermsRaw = parseJsonSafe(map.viral_term, null)
-  const viralTerms: string[] = Array.isArray(viralTermsRaw) ? viralTermsRaw : (map.viral_term ? [map.viral_term] : [])
+  const parseIssues: JsonParseIssue[] = []
 
-  const contentInputs = parseJsonSafe(map.viral_format, {})
-  const videoExamples: string[] = contentInputs?.videoExamples || []
-  const headlineStructures: string[] = contentInputs?.headlineExamples || []
-  const scriptExamples: string[] = contentInputs?.scriptExamples || []
+  const viralTermsResult = parseJsonField<unknown>(
+    id,
+    "viral_term",
+    map.viral_term,
+    [],
+    "[]"
+  )
+  if (viralTermsResult.issue) {
+    parseIssues.push(viralTermsResult.issue)
+  }
 
-  const actionPlan = parseJsonSafe(map.action_plan, null)
+  let viralTerms = toStringArray(viralTermsResult.value)
+  if (viralTerms.length === 0 && typeof viralTermsResult.value === "string" && viralTermsResult.value.trim()) {
+    viralTerms = [viralTermsResult.value.trim()]
+  }
+
+  const contentInputsResult = parseJsonField<Record<string, unknown>>(
+    id,
+    "viral_format",
+    map.viral_format,
+    {
+      __fallback: "invalid_or_missing_viral_format",
+      videoExamples: [],
+      headlineExamples: [],
+      scriptExamples: [],
+    },
+    "{ __fallback, videoExamples: [], headlineExamples: [], scriptExamples: [] }"
+  )
+  if (contentInputsResult.issue) {
+    parseIssues.push(contentInputsResult.issue)
+  }
+
+  const contentInputs = isRecord(contentInputsResult.value)
+    ? contentInputsResult.value
+    : {
+        __fallback: "viral_format_not_object",
+        videoExamples: [],
+        headlineExamples: [],
+        scriptExamples: [],
+      }
+
+  const videoExamples: string[] = toStringArray(contentInputs.videoExamples)
+  const headlineStructures: string[] = toStringArray(contentInputs.headlineExamples)
+  const scriptExamples: string[] = toStringArray(contentInputs.scriptExamples)
+
+  const actionPlanResult = parseJsonField<MapData["action_plan"]>(
+    id,
+    "action_plan",
+    map.action_plan,
+    null,
+    "null"
+  )
+  if (actionPlanResult.issue) {
+    parseIssues.push(actionPlanResult.issue)
+  }
+
+  const actionPlan = actionPlanResult.value
 
   const mapData: MapData = {
     id: map.id,
@@ -79,12 +180,33 @@ export default async function MapPage({ params }: { params: Promise<{ id: string
   const tabAudios: TabAudios = {}
   let speakerImage: string | null = null
   for (const row of audioRows || []) {
-    if (row.tab_id === 'speaker_image') {
+    if (row.tab_id === TAB_IDS.speaker_image) {
       speakerImage = row.audio_url
     } else {
       tabAudios[row.tab_id] = row.audio_url
     }
   }
 
-  return <MapView mapData={mapData} tabAudios={tabAudios} speakerImage={speakerImage} />
+  return (
+    <div>
+      {parseIssues.length > 0 && (
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 pt-6">
+          <div className="rounded-xl border border-red-500/40 bg-red-950/40 px-4 py-3 text-sm text-red-100">
+            <p className="font-semibold">Aviso de integridade do mapa</p>
+            <p className="mt-1">
+              Alguns campos JSON estavam inválidos para o mapa <span className="font-mono">{id}</span>. Fallback estruturado aplicado.
+            </p>
+            <ul className="mt-2 list-disc pl-5">
+              {parseIssues.map((issue, index) => (
+                <li key={`${issue.field}-${index}`}>
+                  campo <span className="font-mono">{issue.field}</span> com fallback <span className="font-mono">{issue.fallbackUsed}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+      <MapView mapData={mapData} tabAudios={tabAudios} speakerImage={speakerImage} />
+    </div>
+  )
 }
