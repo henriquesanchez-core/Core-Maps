@@ -187,31 +187,29 @@ export async function POST(req: Request) {
       }
 
       try {
-        // STEP 1: Client Instagram Profile
-        sendProgress(1, 'Buscando perfil do Instagram...');
-        let clientData = {};
-        try {
-          clientData = await fetchInstagramProfile(cleanUsername, master.signal);
-          console.log('[Generate] clientData:', JSON.stringify(clientData));
-        } catch (err: any) {
-          if (master.signal.aborted) throw err;
-          console.error('[Generate] Erro ao buscar Instagram:', err?.message);
-          sendProgress(1, `Aviso: erro Instagram - ${err.message}`);
-        }
-
-        // STEP 2: Reference Profiles
-        sendProgress(2, 'Buscando perfis de referência...');
-        let referencesData: any[] = [];
-        if (referenceProfiles && referenceProfiles.trim()) {
-          try {
-            const usernames = referenceProfiles.split('\n').map((u: string) => u.trim()).filter(Boolean);
-            referencesData = await fetchInstagramProfiles(usernames, master.signal);
-          } catch (err: any) {
+        // STEPS 1+2: Buscar perfis em paralelo
+        sendProgress(1, 'Buscando perfis do Instagram...');
+        const [clientData, referencesData] = await Promise.all([
+          fetchInstagramProfile(cleanUsername, master.signal).catch((err: any) => {
             if (master.signal.aborted) throw err;
-            console.error('[Generate] Erro ao buscar referências:', err);
-            sendProgress(2, `Aviso: não foi possível buscar referências (${err.message})`);
-          }
-        }
+            console.error('[Generate] Erro ao buscar Instagram:', err?.message);
+            sendProgress(1, `Aviso: erro Instagram - ${err.message}`);
+            return {} as any;
+          }),
+          (async (): Promise<any[]> => {
+            if (!referenceProfiles || !referenceProfiles.trim()) return [];
+            try {
+              const usernames = referenceProfiles.split('\n').map((u: string) => u.trim()).filter(Boolean);
+              return await fetchInstagramProfiles(usernames, master.signal);
+            } catch (err: any) {
+              if (master.signal.aborted) throw err;
+              console.error('[Generate] Erro ao buscar referências:', err);
+              sendProgress(2, `Aviso: referências indisponíveis (${err.message})`);
+              return [];
+            }
+          })(),
+        ]);
+        sendProgress(2, 'Perfis buscados.');
 
         // STEP 3: Extract Profile from Transcription
         let extractedProfile = null;
@@ -229,55 +227,60 @@ export async function POST(req: Request) {
           sendProgress(3, 'Ignorando transcrição (vazia)...');
         }
 
-        // STEP 4: Narrative
-        let narrative = '';
-        if (extractedProfile) {
-          sendProgress(4, 'Gerando Narrativa Magnética...');
-          const nucleoInfo = formatNucleo(extractedProfile);
-          const prompt = NARRATIVE_PROMPT.replace('{{NUCLEO_INFLUENCIA}}', nucleoInfo);
-          narrative = await callClaude(prompt, master.signal);
-        } else {
-          sendProgress(4, 'Sem perfil extraído. Pulando narrativa.');
-        }
-
-        // STEP 5: Generate headline/viral/script examples
+        // STEPS 4+5: Narrativa e Exemplos IA em paralelo
         const viralTermsArray = viralTerms;
         const headlineExamplesArray = headlineExamples;
         const scriptExamplesArray = scriptExamples;
-
-        let actionPlan = null;
         const hasInputs = extractedProfile && (headlineExamplesArray.length > 0 || viralTermsArray.length > 0 || scriptExamplesArray.length > 0);
 
-        if (hasInputs) {
-          sendProgress(5, 'Gerando exemplos personalizados com IA...');
+        let narrative = '';
+        let actionPlan = null;
+
+        if (extractedProfile) {
+          sendProgress(4, 'Gerando Narrativa e Exemplos IA em paralelo...');
           const nucleoInfo = formatNucleo(extractedProfile);
-          const structuresList = headlineExamplesArray.map((h: string, i: number) => `${i + 1}. ${h}`).join('\n');
-          const termsList = viralTermsArray.map((t: string, i: number) => `${i + 1}. ${t}`).join('\n');
-          const scriptsList = scriptExamplesArray.map((s: string, i: number) => `--- Roteiro ${i + 1} ---\n${s}`).join('\n\n');
 
-          const prompt = HEADLINE_EXAMPLES_PROMPT
-            .replace('{{NUCLEO_INFLUENCIA}}', nucleoInfo)
-            .replace('{{HEADLINE_STRUCTURES}}', structuresList || 'Nenhuma estrutura fornecida')
-            .replace('{{VIRAL_TERMS}}', termsList || 'Nenhum termo viral fornecido')
-            .replace('{{SCRIPT_STRUCTURES}}', scriptsList || 'Nenhum roteiro fornecido');
+          const [narrativeResult, actionPlanResult] = await Promise.all([
+            // Step 4: Narrativa
+            (async () => {
+              const prompt = NARRATIVE_PROMPT.replace('{{NUCLEO_INFLUENCIA}}', nucleoInfo);
+              return callClaude(prompt, master.signal);
+            })(),
+            // Step 5: Exemplos IA
+            hasInputs ? (async () => {
+              const structuresList = headlineExamplesArray.map((h: string, i: number) => `${i + 1}. ${h}`).join('\n');
+              const termsList = viralTermsArray.map((t: string, i: number) => `${i + 1}. ${t}`).join('\n');
+              const scriptsList = scriptExamplesArray.map((s: string, i: number) => `--- Roteiro ${i + 1} ---\n${s}`).join('\n\n');
+              const prompt = HEADLINE_EXAMPLES_PROMPT
+                .replace('{{NUCLEO_INFLUENCIA}}', nucleoInfo)
+                .replace('{{HEADLINE_STRUCTURES}}', structuresList || 'Nenhuma estrutura fornecida')
+                .replace('{{VIRAL_TERMS}}', termsList || 'Nenhum termo viral fornecido')
+                .replace('{{SCRIPT_STRUCTURES}}', scriptsList || 'Nenhum roteiro fornecido');
+              return callClaude(prompt, master.signal);
+            })() : Promise.resolve(null),
+          ]);
 
-          const result = await callClaude(prompt, master.signal);
-          const cleaned = result.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+          narrative = narrativeResult;
+          sendProgress(5, 'Narrativa e Exemplos IA concluídos.');
 
-          try {
-            actionPlan = JSON.parse(cleaned);
-            if (actionPlan && typeof actionPlan === 'object') {
-              actionPlan.script_rewrites = normalizeScriptRewrites((actionPlan as any).script_rewrites);
+          if (hasInputs && actionPlanResult) {
+            const cleaned = actionPlanResult.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+            try {
+              actionPlan = JSON.parse(cleaned);
+              if (actionPlan && typeof actionPlan === 'object') {
+                actionPlan.script_rewrites = normalizeScriptRewrites((actionPlan as any).script_rewrites);
+              }
+            } catch {
+              console.error('[Generate] Failed to parse headline examples:', cleaned.slice(0, 300));
+              actionPlan = {
+                headline_examples: headlineExamplesArray.map((h: string) => ({ structure: h, filled_example: '' })),
+                viral_term_examples: viralTermsArray.map((t: string) => ({ viral_term: t, headline_example: '' })),
+                script_rewrites: [],
+              };
             }
-          } catch {
-            console.error('[Generate] Failed to parse headline examples:', cleaned.slice(0, 300));
-            actionPlan = {
-              headline_examples: headlineExamplesArray.map((h: string) => ({ structure: h, filled_example: '' })),
-              viral_term_examples: viralTermsArray.map((t: string) => ({ viral_term: t, headline_example: '' })),
-              script_rewrites: [],
-            };
           }
         } else {
+          sendProgress(4, 'Sem perfil extraído. Pulando narrativa.');
           sendProgress(5, 'Sem insumos para exemplos. Pulando...');
         }
 
