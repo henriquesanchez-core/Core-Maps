@@ -1,21 +1,36 @@
 import { Anthropic } from '@anthropic-ai/sdk'
 
 export const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY
-});
+  apiKey: process.env.ANTHROPIC_API_KEY,
+})
 
-export async function callClaude(prompt: string) {
-  const message = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 4096,
-    messages: [{ role: 'user', content: prompt }],
-  });
-  
-  const content = message.content[0];
-  if (content.type === 'text') {
-    return content.text;
+async function callClaudeOnce(prompt: string, signal?: AbortSignal): Promise<string> {
+  const message = await anthropic.messages.create(
+    {
+      model: 'claude-sonnet-4-6',
+      max_tokens: 4096,
+      messages: [{ role: 'user', content: prompt }],
+    },
+    { signal, timeout: 60_000 },
+  )
+  const content = message.content[0]
+  if (content.type !== 'text') throw new Error('Claude retornou tipo de conteúdo inesperado')
+  return content.text
+}
+
+export async function callClaude(prompt: string, signal?: AbortSignal): Promise<string> {
+  const backoffs = [1000, 2000]
+  for (let attempt = 0; attempt <= 2; attempt++) {
+    try {
+      return await callClaudeOnce(prompt, signal)
+    } catch (err: any) {
+      const status: number = err?.status ?? 0
+      const retryable = status === 429 || (status >= 500 && status < 600)
+      if (!retryable || attempt === 2) throw err
+      await new Promise(r => setTimeout(r, backoffs[attempt]))
+    }
   }
-  return '';
+  throw new Error('Unreachable')
 }
 
 export const EXTRACT_PROFILE_PROMPT = `Você é um estrategista sênior do "Método Audience" criado por Elias Maman. Sua missão é extrair o NÚCLEO DE INFLUÊNCIA completo de um mentorado a partir da transcrição de uma sessão de diagnóstico/mentoria.

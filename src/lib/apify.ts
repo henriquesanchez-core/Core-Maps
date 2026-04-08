@@ -6,23 +6,34 @@ export interface InstagramProfile {
 
 const APIFY_BASE = 'https://api.apify.com/v2'
 
-async function runActorSync(usernames: string[]): Promise<any[]> {
-  const token = process.env.APIFY_API_TOKEN
-  if (!token) {
-    throw new Error('APIFY_API_TOKEN não definido')
-  }
+function combineSignals(a: AbortSignal, b?: AbortSignal): AbortSignal {
+  if (!b) return a
+  const controller = new AbortController()
+  const abort = (reason?: unknown) => controller.abort(reason)
+  a.addEventListener('abort', () => abort(a.reason), { once: true })
+  b.addEventListener('abort', () => abort(b.reason), { once: true })
+  if (a.aborted) controller.abort(a.reason)
+  if (b.aborted) controller.abort(b.reason)
+  return controller.signal
+}
 
-  const url = `${APIFY_BASE}/acts/apify~instagram-profile-scraper/run-sync-get-dataset-items?token=${token}`
+async function runActorSync(usernames: string[], signal?: AbortSignal): Promise<any[]> {
+  const token = process.env.APIFY_API_TOKEN
+  if (!token) throw new Error('APIFY_API_TOKEN não definido')
+
+  const url = `${APIFY_BASE}/acts/apify~instagram-profile-scraper/run-sync-get-dataset-items`
+  const combined = combineSignals(AbortSignal.timeout(30_000), signal)
 
   console.log('[Apify] Chamando API para:', usernames)
 
   const res = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      usernames,
-      resultsLimit: usernames.length,
-    }),
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ usernames, resultsLimit: usernames.length }),
+    signal: combined,
   })
 
   if (!res.ok) {
@@ -32,6 +43,9 @@ async function runActorSync(usernames: string[]): Promise<any[]> {
   }
 
   const items = await res.json()
+  if (!Array.isArray(items)) {
+    throw new Error(`Apify retornou formato inesperado: ${JSON.stringify(items).slice(0, 200)}`)
+  }
   console.log('[Apify] Retornados:', items.length, 'items')
   return items
 }
@@ -44,55 +58,33 @@ function cleanUsername(u: string): string {
     .trim()
 }
 
-async function downloadImageAsBase64(imageUrl: string): Promise<string | null> {
-  try {
-    const res = await fetch(imageUrl)
-    if (!res.ok) return null
-
-    const buffer = await res.arrayBuffer()
-    const contentType = res.headers.get('content-type') || 'image/jpeg'
-    const base64 = Buffer.from(buffer).toString('base64')
-    return `data:${contentType};base64,${base64}`
-  } catch (err) {
-    console.warn('[Apify] Falha ao baixar imagem:', err)
-    return null
-  }
-}
-
-async function mapItem(item: any, fallbackUsername: string): Promise<InstagramProfile> {
-  const cdnUrl = item.profilePicUrlHD ?? item.profilePicUrl ?? null
-  const profilePicUrl = cdnUrl ? await downloadImageAsBase64(cdnUrl) : null
-
+function mapItem(item: any, fallbackUsername: string): InstagramProfile {
   return {
     username: item.username ?? fallbackUsername,
     fullName: item.fullName ?? null,
-    profilePicUrl,
+    profilePicUrl: item.profilePicUrlHD ?? item.profilePicUrl ?? null,
   }
 }
 
-export async function fetchInstagramProfile(username: string): Promise<InstagramProfile> {
+export async function fetchInstagramProfile(username: string, signal?: AbortSignal): Promise<InstagramProfile> {
   const clean = cleanUsername(username)
-  if (!clean) {
-    return { username: clean, fullName: null, profilePicUrl: null }
-  }
+  if (!clean) return { username: clean, fullName: null, profilePicUrl: null }
 
-  const items = await runActorSync([clean])
+  const items = await runActorSync([clean], signal)
   const item = items[0]
-
   if (!item) {
     console.warn('[Apify] Sem resultado para:', clean)
     return { username: clean, fullName: null, profilePicUrl: null }
   }
 
-  const result = await mapItem(item, clean)
+  const result = mapItem(item, clean)
   console.log('[Apify] Perfil:', result.username, '- foto:', result.profilePicUrl ? 'OK' : 'VAZIO')
   return result
 }
 
-export async function fetchInstagramProfiles(usernames: string[]): Promise<InstagramProfile[]> {
+export async function fetchInstagramProfiles(usernames: string[], signal?: AbortSignal): Promise<InstagramProfile[]> {
   const clean = usernames.map(cleanUsername).filter(Boolean)
   if (clean.length === 0) return []
-
-  const items = await runActorSync(clean)
-  return Promise.all(items.map((item: any) => mapItem(item, '')))
+  const items = await runActorSync(clean, signal)
+  return items.map((item: any) => mapItem(item, ''))
 }
