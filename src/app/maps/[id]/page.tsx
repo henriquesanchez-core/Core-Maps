@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase"
+import { supabasePublic } from "@/lib/supabase"
 import Link from "next/link"
 import type { Metadata } from "next"
 import type { MapData, TabAudios } from "@/types/map"
@@ -14,7 +14,7 @@ function parseJsonSafe(str: any, fallback: any = null) {
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params
-  const { data: map } = await supabase.from('maps').select('client_username, client_data, extracted_profile').eq('id', id).single()
+  const { data: map } = await supabasePublic.from('maps').select('client_username, client_data, extracted_profile').eq('id', id).single()
 
   const name = map?.client_data?.fullName || map?.extracted_profile?.nome || map?.client_username || 'Cliente'
   const especialidade = map?.extracted_profile?.especialidade || ''
@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 export default async function MapPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  const { data: map, error } = await supabase
+  const { data: map, error } = await supabasePublic
     .from('maps')
     .select('*')
     .eq('id', id)
@@ -61,6 +61,7 @@ export default async function MapPage({ params }: { params: Promise<{ id: string
 
   const mapData: MapData = {
     id: map.id,
+    updated_at: map.updated_at || null,
     client_username: map.client_username,
     client_data: map.client_data || { username: map.client_username, fullName: null, profilePicUrl: null },
     references_data: map.references_data || [],
@@ -74,7 +75,7 @@ export default async function MapPage({ params }: { params: Promise<{ id: string
   }
 
   // Fetch tab audios + speaker image
-  const { data: audioRows } = await supabase.from('tab_audios').select('tab_id, audio_url')
+  const { data: audioRows } = await supabasePublic.from('tab_audios').select('tab_id, audio_url')
   const tabAudios: TabAudios = {}
   let speakerImage: string | null = null
   for (const row of audioRows || []) {

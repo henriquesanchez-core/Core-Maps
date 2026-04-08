@@ -1,10 +1,10 @@
-import { supabase } from "@/lib/supabase"
+import { supabasePublic } from "@/lib/supabase"
 import { SettingsView } from "./SettingsView"
 
 export const revalidate = 0
 
 export default async function SettingsPage() {
-  const { data } = await supabase
+  const { data } = await supabasePublic
     .from("tab_audios")
     .select("tab_id, audio_url")
 

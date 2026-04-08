@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase"
+import { supabasePublic } from "@/lib/supabase"
 import { GenerationForm } from "@/components/GenerationForm"
 import { Map, Zap, Settings } from "lucide-react"
 import Link from "next/link"
@@ -6,7 +6,7 @@ import Link from "next/link"
 export const revalidate = 0; // Disable cache so Dashboard loads freshest.
 
 export default async function Home() {
-  const { data: maps } = await supabase
+  const { data: maps } = await supabasePublic
     .from('maps')
     .select('id, client_username, created_at')
     .order('created_at', { ascending: false })

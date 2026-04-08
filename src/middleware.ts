@@ -1,30 +1,46 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { jwtVerify } from 'jose'
+import { verifyToken } from '@/lib/auth'
 
-const secret = new TextEncoder().encode(process.env.AUTH_SECRET || 'fallback')
+const MAP_MUTATION_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
 
-const PROTECTED = ['/settings']
-
-export async function middleware(req: NextRequest) {
+function isProtectedRequest(req: NextRequest) {
   const { pathname } = req.nextUrl
 
-  // Only protect exact matches
-  if (!PROTECTED.includes(pathname)) return NextResponse.next()
+  if (pathname === '/settings') return true
+  if (pathname === '/api/generate') return true
+  if (pathname.startsWith('/api/settings/')) return true
+  if (pathname.startsWith('/api/maps/')) {
+    return MAP_MUTATION_METHODS.has(req.method.toUpperCase())
+  }
+
+  return false
+}
+
+function unauthorized(req: NextRequest) {
+  if (req.nextUrl.pathname.startsWith('/api/')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  return NextResponse.redirect(new URL('/login', req.url))
+}
+
+export async function middleware(req: NextRequest) {
+  if (!isProtectedRequest(req)) return NextResponse.next()
 
   const token = req.cookies.get('auth_token')?.value
   if (!token) {
-    return NextResponse.redirect(new URL('/login', req.url))
+    return unauthorized(req)
   }
 
-  try {
-    await jwtVerify(token, secret)
-    return NextResponse.next()
-  } catch {
-    return NextResponse.redirect(new URL('/login', req.url))
+  const payload = await verifyToken(token)
+  if (!payload || payload.role !== 'admin') {
+    return unauthorized(req)
   }
+
+  return NextResponse.next()
 }
 
 export const config = {
-  matcher: ['/settings'],
+  matcher: ['/settings', '/api/generate', '/api/maps/:path*', '/api/settings/:path*'],
 }
