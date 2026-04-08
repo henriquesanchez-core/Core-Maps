@@ -8,7 +8,6 @@ import {
   HEADLINE_EXAMPLES_PROMPT,
   PLAYBOOK_PROMPT,
 } from '@/lib/claude';
-import { requireAdmin } from '@/lib/auth';
 import { GenerateRequestSchema } from '@/lib/validation';
 
 export const dynamic = 'force-dynamic';
@@ -132,13 +131,6 @@ function normalizeStringArray(value: unknown, maxItems: number, maxLength: numbe
 }
 
 export async function POST(req: Request) {
-  try {
-    await requireAdmin(req);
-  } catch (error) {
-    if (error instanceof Response) return error;
-    return NextResponse.json({ error: 'Failed to validate authentication.' }, { status: 500 });
-  }
-
   let body: any;
   try {
     body = await req.json();

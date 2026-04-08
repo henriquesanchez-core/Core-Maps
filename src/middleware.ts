@@ -8,7 +8,6 @@ function isProtectedRequest(req: NextRequest) {
   const { pathname } = req.nextUrl
 
   if (pathname === '/settings') return true
-  if (pathname === '/api/generate') return true
   if (pathname.startsWith('/api/settings/')) return true
   if (pathname.startsWith('/api/maps/')) {
     return MAP_MUTATION_METHODS.has(req.method.toUpperCase())
@@ -42,5 +41,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/settings', '/api/generate', '/api/maps/:path*', '/api/settings/:path*'],
+  matcher: ['/settings', '/api/maps/:path*', '/api/settings/:path*'],
 }
