@@ -9,12 +9,21 @@ export function GenerationForm() {
   const [progressMsg, setProgressMsg] = useState("")
   const [currentStep, setCurrentStep] = useState(0)
   const [resultId, setResultId] = useState<string | null>(null)
+  const [companyName, setCompanyName] = useState("")
+  const [niche, setNiche] = useState("")
 
   // Tag-based states
   const [viralTerms, setViralTerms] = useState<string[]>([])
   const [videoExamples, setVideoExamples] = useState<string[]>([])
   const [headlineExamples, setHeadlineExamples] = useState<string[]>([])
   const [scriptExamples, setScriptExamples] = useState<string[]>([])
+
+  const trimmedCompanyName = companyName.trim()
+  const trimmedNiche = niche.trim()
+  const hasCompanyName = trimmedCompanyName.length > 0
+  const hasNiche = trimmedNiche.length > 0
+  const hasAtLeastOneTag = viralTerms.length > 0
+  const canSubmit = !loading && hasCompanyName && hasNiche && hasAtLeastOneTag
 
   const steps = [
     "Instagram",
@@ -28,6 +37,10 @@ export function GenerationForm() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
+    if (!canSubmit) {
+      return
+    }
+
     setLoading(true)
     setResultId(null)
     setCurrentStep(0)
@@ -35,6 +48,10 @@ export function GenerationForm() {
 
     const formData = new FormData(e.currentTarget)
     const payload = {
+      companyName: trimmedCompanyName,
+      niche: trimmedNiche,
+      tags: viralTerms,
+      painPoints: [trimmedNiche],
       clientUsername: formData.get("clientUsername"),
       referenceProfiles: formData.get("referenceProfiles"),
       transcription: formData.get("transcription"),
@@ -50,6 +67,15 @@ export function GenerationForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       })
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          window.location.href = '/login'
+          return
+        }
+        const errorPayload = await response.json().catch(() => null) as { error?: string } | null
+        throw new Error(errorPayload?.error || `Falha na requisição (${response.status})`)
+      }
 
       if (!response.body) throw new Error("No response body")
       const reader = response.body.getReader()
@@ -79,7 +105,7 @@ export function GenerationForm() {
             } else if (data.type === "error") {
               setProgressMsg("Erro: " + data.message)
             }
-          } catch(e) {}
+          } catch {}
         }
       }
     } catch (err: any) {
@@ -99,6 +125,38 @@ export function GenerationForm() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Row 1: Instagram */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-zinc-400">Nome da Empresa</label>
+          <input
+            value={companyName}
+            onChange={(e) => setCompanyName(e.target.value)}
+            type="text"
+            placeholder="ex: Core Maps"
+            className={`w-full bg-zinc-950 border rounded-lg p-3 text-zinc-100 focus:outline-none focus:ring-2 transition-all ${
+              hasCompanyName ? "border-zinc-800 focus:ring-blue-500" : "border-red-500/60 focus:ring-red-500"
+            }`}
+          />
+          {!hasCompanyName && (
+            <p className="text-xs text-red-400">Informe o nome da empresa.</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-zinc-400">Nicho</label>
+          <input
+            value={niche}
+            onChange={(e) => setNiche(e.target.value)}
+            type="text"
+            placeholder="ex: Consultoria de marketing"
+            className={`w-full bg-zinc-950 border rounded-lg p-3 text-zinc-100 focus:outline-none focus:ring-2 transition-all ${
+              hasNiche ? "border-zinc-800 focus:ring-blue-500" : "border-red-500/60 focus:ring-red-500"
+            }`}
+          />
+          {!hasNiche && (
+            <p className="text-xs text-red-400">Informe o nicho.</p>
+          )}
+        </div>
+
         <div className="space-y-2">
           <label className="text-sm font-medium text-zinc-400">@ do Instagram do Cliente</label>
           <input
@@ -144,6 +202,9 @@ export function GenerationForm() {
           tags={viralTerms}
           onChange={setViralTerms}
         />
+        {!hasAtLeastOneTag && (
+          <p className="text-xs text-red-400 -mt-4">Adicione pelo menos 1 tag em Termos Virais.</p>
+        )}
 
         {/* Exemplos de Vídeo */}
         <TagInput
@@ -173,7 +234,7 @@ export function GenerationForm() {
         />
 
         <button
-          disabled={loading}
+          disabled={!canSubmit}
           type="submit"
           className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-medium py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all cursor-pointer flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
