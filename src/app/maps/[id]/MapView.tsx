@@ -193,24 +193,13 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
   }
 
   const profile = mapData.extracted_profile
-  const beneficios = profile?.beneficios ?? []
-  const crencasCentrais = profile?.crencas_centrais ?? []
-  const solucoesAlternativas = profile?.solucoes_alternativas ?? []
   const nucleoFields = profile ? [
     { label: "Especialidade", value: profile.termo_proprio || profile.especialidade, color: "text-white" },
     { label: "Público Alvo", value: profile.publico_alvo, color: "text-white" },
     { label: "Dor que Resolve", value: profile.dor_principal || profile.dor, color: "text-white" },
     { label: "Inimigo Comum", value: profile.nome_inimigo ? `${profile.inimigo} ("${profile.nome_inimigo}")` : profile.inimigo, color: "text-red-400" },
     profile.solucao ? { label: "Solução", value: profile.solucao, color: "text-emerald-400" } : null,
-    beneficios.length > 0 ? { label: "Benefícios", value: beneficios.join(" • "), color: "text-emerald-400" } : null,
     { label: "Desejo / Transformação", value: profile.desejo, color: "text-emerald-400" },
-    profile.mentira_crenca_errada ? { label: "Mentira que o Público Acredita", value: profile.mentira_crenca_errada, color: "text-orange-400" } : null,
-    profile.problema_filosofico ? { label: "Indignação", value: profile.problema_filosofico, color: "text-orange-400" } : null,
-    { label: "Nova Crença", value: profile.nova_crenca, color: "text-[var(--gold-light)]" },
-    crencasCentrais.length > 0 ? { label: "Crenças Centrais", value: crencasCentrais.join(" | "), color: "text-[var(--gold-light)]" } : null,
-    profile.nome_metodo ? { label: "Método", value: profile.nome_metodo, color: "text-[var(--gold)]" } : null,
-    solucoesAlternativas.length > 0 ? { label: "O que já tentaram", value: solucoesAlternativas.join("; "), color: "text-zinc-400" } : null,
-    profile.provas_cases ? { label: "Provas / Cases", value: profile.provas_cases, color: "text-zinc-400" } : null,
   ].filter(Boolean) as { label: string; value: string; color: string }[] : []
 
   const nucleoAudio = tabAudios[TAB_IDS.nucleo]
@@ -455,7 +444,10 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
                 <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 sm:p-8 md:p-10">
                   <div className="prose prose-invert prose-premium max-w-none text-zinc-300 leading-relaxed text-sm sm:text-base">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {mapData.narrative.replace(/(Qual|E qual) d(ess|est)as.*?(\?|!)/gi, '').trim()}
+                      {mapData.narrative
+                        .replace(/## CRENÇAS CENTRAIS[\s\S]*?(?=## CONECTORES|$)/i, '')
+                        .replace(/(Qual|E qual) d(ess|est)as.*?(\?|!)/gi, '')
+                        .trim()}
                     </ReactMarkdown>
                   </div>
                 </div>
