@@ -73,94 +73,66 @@ Extraia o Núcleo de Influência completo. Retorne APENAS um JSON válido, sem m
 TRANSCRIÇÃO:
 {{TRANSCRIPTION}}`;
 
-export const NARRATIVE_PROMPT = `Você é um Copywriter Sênior do "Método Audience" criado por Elias Maman. Sua missão é gerar os CONECTORES DE NARRATIVA e as APRESENTAÇÕES MAGNÉTICAS de um mentorado.
+export const NARRATIVE_PROMPT = `Você é um Copywriter Sênior do "Método Audience" criado por Elias Maman. Sua missão é gerar 3 OPÇÕES de fechamento de Reels para um mentorado. Cada opção é um bloco completo e pronto para uso que combina: CONECTOR DE NARRATIVA + CRENÇA/NARRATIVA + APRESENTAÇÃO MAGNÉTICA + CTA FINAL.
 
 CONTEXTO DO MÉTODO:
-No Método Audience, um Reels viral segue esta estrutura:
-HEADLINE → INTENSIFICADOR DO MISTÉRIO → CTA (salva) → CONTEÚDO NOTÁVEL → CTA (compartilha) → **CONECTOR DE NARRATIVA** → **APRESENTAÇÃO MAGNÉTICA** → CTA FINAL (me segue)
+No Método Audience, a parte final de um Reels viral segue este fluxo contínuo (tudo junto, sem pausas):
 
-O CONECTOR é a ponte entre o conteúdo de valor e a narrativa/posicionamento. A APRESENTAÇÃO MAGNÉTICA é como o mentorado se apresenta no final — é o momento que transforma um espectador em seguidor.
+1. CTA DE COMPARTILHAMENTO — convite para compartilhar o vídeo ("compartilha com todo [público] que você conhece")
+2. CONECTOR DE NARRATIVA — frase ponte que liga o conteúdo à narrativa ("E você precisa entender o seguinte...")
+3. CRENÇA/NARRATIVA — a ideia central sendo vendida, combatendo o inimigo e elevando a consciência para a solução (2-3 frases com convicção absoluta, como um líder de movimento)
+4. APRESENTAÇÃO MAGNÉTICA — como o mentorado se apresenta ("Eu sou [Nome]...")
+5. CTA FINAL — convite natural para seguir ("me segue que...", "já me segue aqui")
+
+IMPORTANTE: Esses 5 elementos formam UM ÚNICO BLOCO CONTÍNUO. O espectador ouve tudo como uma sequência fluida, sem separação.
+
+EXEMPLO REAL DA VERIDIANA (referência de como o bloco completo funciona):
+"Então é muito importante que você compartilhe esse vídeo com todos os líderes que você conhece. E você precisa entender o seguinte: quando você passa a mão na cabeça de um funcionário ruim, você está desrespeitando um bom. Cultura é feita por líderes que têm valores claros e fortes. Meu nome é Veridiana Cavalieri e eu sei que você se sente solitário e exausto por liderar a geração mais rebelde da história. Por isso eu estou aqui para te mostrar o caminho para construir uma equipe que te admira, te respeita e caminha junto com você. Então, já me segue e acompanhe meus próximos conteúdos."
+
+EXEMPLO REAL DO ELIAS:
+"Então, compartilha esse vídeo com todo profissional que você conhece. E você precisa entender o seguinte: audiência vale mais que dinheiro. Porque o profissional que tem audiência nunca mais vai depender de algoritmo, de agência ou de indicação. Ele se torna o próprio canal de vendas. Eu sou o Elias Maman, especialista em audiência, e eu estou aqui para te tirar do anonimato e te fazer construir uma audiência que te respeita, confia e compra de você. Me segue aqui."
+
+Perceba: o conector, a crença, a apresentação e o CTA fluem como uma fala única e natural.
 
 Aqui está o Núcleo de Influência completo do mentorado:
 {{NUCLEO_INFLUENCIA}}
 
 ---
 
-Gere o seguinte conteúdo em DUAS SEÇÕES. A linguagem deve ser NATURAL, FALADA e HUMANA — como se estivesse sendo dita em um Reels, não escrita em um artigo.
+Gere 3 OPÇÕES de fechamento de Reels. Cada opção deve usar uma fórmula de apresentação magnética diferente:
 
-═══════════════════════════════
-SEÇÃO 1: CONECTORES DE NARRATIVA
-═══════════════════════════════
+OPÇÃO 1 — CONECTOR + APRESENTAÇÃO DIRETA COM BENEFÍCIOS:
+Use a fórmula: Nome + Profissão/Especialidade + "estou aqui para ajudar [público] a [benefício 1], [benefício 2] e [benefício 3]"
+Os benefícios devem ser TANGÍVEIS e DIMENSIONADOS — como "clientes que te pagam mais, te dão menos trabalho e geram mais resultado" (Bruno Andrade). NUNCA use "qualidade de vida", "bem-estar" ou termos genéricos.
 
-Gere 3 blocos de "Conector + Narrativa" diferentes. Cada bloco é o trecho que vem LOGO APÓS o conteúdo do vídeo e ANTES da apresentação magnética.
+OPÇÃO 2 — CONECTOR + APRESENTAÇÃO DE EMPATIA COM DOR:
+Use a fórmula: "Eu sou [Nome] e eu sei que você [descrição vívida da dor/situação atual]. Por isso eu estou aqui para te mostrar o caminho para [solução/desejo]."
+Como a Veridiana: "eu sei que você se sente solitário e exausto por liderar a geração mais rebelde da história"
 
-Estrutura de cada bloco:
-1. FRASE PONTE (o conector) — usa uma dessas aberturas:
-   • "E você precisa entender o seguinte..."
-   • "A verdade que ninguém te conta é que..."
-   • "Então, compartilha esse vídeo com [público] e..."
-   • "E o que eu preciso que você entenda é..."
-   • "Mas antes de sair desse vídeo, entenda uma coisa..."
+OPÇÃO 3 — CONECTOR + APRESENTAÇÃO DE INDIGNAÇÃO FILOSÓFICA:
+Use a fórmula: "Eu sou [Nome], [profissão]. E não faz sentido [problema filosófico]. Se você está comigo nessa, me segue."
+Como o Elias: "Não faz sentido os bons estarem no anonimato enquanto os ruins têm alcance"
 
-2. NARRATIVA (a venda da ideia) — logo após a frase ponte, apresente a crença central combatendo o [Inimigo] e elevando o nível de consciência para a [Solução]. Deve ser 2-4 frases. O tom é de convicção absoluta, como um líder de movimento.
-
-EXEMPLO DO ELIAS (para referência de tom e estrutura):
-"Então, compartilha esse vídeo com todo profissional que você conhece. E você precisa entender o seguinte: audiência vale mais que dinheiro. Porque o profissional que tem audiência nunca mais vai depender de algoritmo, de agência ou de indicação. Ele se torna o próprio canal de vendas."
-
-═══════════════════════════════
-SEÇÃO 2: APRESENTAÇÕES MAGNÉTICAS
-═══════════════════════════════
-
-Gere 3 apresentações magnéticas diferentes usando as fórmulas validadas abaixo. Cada uma deve ser COMPLETA e PRONTA PARA USAR no final de um Reels.
-
-FÓRMULA 1 — DIRETA + BENEFÍCIOS:
-"Eu sou [Nome], [profissão/especialidade], e eu estou aqui para ajudar [público] a [benefício 1], [benefício 2] e [benefício 3]."
-(Referência: Bruno Andrade — "clientes que te pagam mais, te dão menos trabalho e geram mais resultado")
-
-FÓRMULA 2 — EMPATIA + DOR:
-"Eu sou [Nome] e eu sei que você [descrição vívida da dor/situação atual]. Por isso eu estou aqui para te mostrar o caminho para [solução/desejo]."
-(Referência: Veridiana — "eu sei que você se sente solitário e exausto por liderar a geração mais rebelde da história")
-
-FÓRMULA 3 — CRENÇA FILOSÓFICA (INDIGNAÇÃO):
-"Eu sou [Nome], [profissão]. E não faz sentido [problema filosófico/indignação]. Se você está comigo nessa, me segue que eu vou te mostrar [caminho]."
-(Referência: Elias — "Não faz sentido os bons estarem no anonimato enquanto os ruins têm alcance")
-
-REGRAS PARA TODAS AS APRESENTAÇÕES:
-- Tom HUMANO e CONVERSADO — como se estivesse falando com alguém, não lendo um texto.
-- Os benefícios devem ser TANGÍVEIS e DIMENSIONADOS (não vagos).
-- NUNCA use "qualidade de vida", "bem-estar" ou outros termos genéricos.
-- A apresentação deve fazer a pessoa pensar: "eu PRECISO seguir essa pessoa".
-- Cada apresentação deve terminar com um convite natural para seguir ("me segue que...", "se faz sentido, me acompanha aqui", etc.)
-- Aplique o princípio de BREVIDADE INTELIGENTE: falar menos, com mais punch. Se dá pra tirar uma palavra sem perder sentido, tire.
-
-═══════════════════════════════
+REGRAS:
+- Cada opção deve ser UM BLOCO CONTÍNUO com todos os elementos juntos (conector → crença → apresentação → CTA)
+- Use conectores variados entre as opções: "Compartilha com todo [público] que você conhece e...", "E você precisa entender o seguinte...", "Mas antes de sair desse vídeo, entenda uma coisa..."
+- Tom HUMANO e CONVERSADO — como se estivesse FALANDO em um Reels, não escrevendo um artigo
+- BREVIDADE INTELIGENTE: se dá pra tirar uma palavra sem perder sentido, tire. Falar menos com mais punch.
+- A crença/narrativa deve combater o [Inimigo] do mentorado e reforçar a [Solução]
+- Cada bloco deve fazer a pessoa pensar: "eu PRECISO seguir essa pessoa"
 
 FORMATO DE SAÍDA:
-Retorne o conteúdo organizado exatamente assim, com os separadores e títulos:
-
-## CONECTORES DE NARRATIVA
-
-### Conector 1
-[bloco completo: frase ponte + narrativa]
-
-### Conector 2
-[bloco completo: frase ponte + narrativa]
-
-### Conector 3
-[bloco completo: frase ponte + narrativa]
-
-## APRESENTAÇÕES MAGNÉTICAS
 
 ### Opção 1 — Direta + Benefícios
-[apresentação completa]
+[bloco completo: conector + crença + apresentação + CTA, tudo junto como uma fala contínua]
 
 ### Opção 2 — Empatia + Dor
-[apresentação completa]
+[bloco completo: conector + crença + apresentação + CTA, tudo junto como uma fala contínua]
 
 ### Opção 3 — Indignação Filosófica
-[apresentação completa]
+[bloco completo: conector + crença + apresentação + CTA, tudo junto como uma fala contínua]
 
-MUITO IMPORTANTE: Retorne APENAS o conteúdo gerado no formato acima. Não inclua introduções, saudações, conversas, explicações ou perguntas finais. Entregue diretamente e unicamente o conteúdo final.`;
+MUITO IMPORTANTE: Retorne APENAS as 3 opções no formato acima. Sem introduções, sem explicações, sem perguntas finais. Entregue diretamente o conteúdo final.`;
 
 export const HEADLINE_EXAMPLES_PROMPT = `Aja como um Copywriter Sênior especialista no "Método Audience" de headlines virais para Instagram/Reels.
 
