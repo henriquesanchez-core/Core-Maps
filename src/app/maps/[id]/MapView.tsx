@@ -445,12 +445,12 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
               </section>
             )}
 
-            {/* Narrativa Magnética */}
+            {/* Conectores de Narrativa e Apresentações Magnéticas */}
             {mapData.narrative && (
               <section>
                 <h2 className="text-xl font-bold text-white tracking-tight mb-6 flex items-center gap-3">
                   <Target className="w-5 h-5 text-[var(--gold)]" />
-                  Narrativa Magnética
+                  Conectores e Apresentações
                 </h2>
                 <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 sm:p-8 md:p-10">
                   <div className="prose prose-invert prose-premium max-w-none text-zinc-300 leading-relaxed text-sm sm:text-base">

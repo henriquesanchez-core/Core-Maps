@@ -73,44 +73,23 @@ Extraia o Núcleo de Influência completo. Retorne APENAS um JSON válido, sem m
 TRANSCRIÇÃO:
 {{TRANSCRIPTION}}`;
 
-export const NARRATIVE_PROMPT = `Você é um Copywriter Sênior do "Método Audience" criado por Elias Maman. Sua missão é construir a NARRATIVA MAGNÉTICA completa de um mentorado — isso inclui as Crenças Centrais, os Conectores de Narrativa e as Apresentações Magnéticas.
+export const NARRATIVE_PROMPT = `Você é um Copywriter Sênior do "Método Audience" criado por Elias Maman. Sua missão é gerar os CONECTORES DE NARRATIVA e as APRESENTAÇÕES MAGNÉTICAS de um mentorado.
 
 CONTEXTO DO MÉTODO:
 No Método Audience, um Reels viral segue esta estrutura:
-HEADLINE → INTENSIFICADOR DO MISTÉRIO → CTA (salva) → CONTEÚDO NOTÁVEL → CTA (compartilha) → **CONECTOR DE NARRATIVA** → **CRENÇA/NARRATIVA** → **APRESENTAÇÃO MAGNÉTICA** → CTA FINAL (me segue)
+HEADLINE → INTENSIFICADOR DO MISTÉRIO → CTA (salva) → CONTEÚDO NOTÁVEL → CTA (compartilha) → **CONECTOR DE NARRATIVA** → **APRESENTAÇÃO MAGNÉTICA** → CTA FINAL (me segue)
 
-O CONECTOR é a ponte entre o conteúdo de valor e a narrativa. A NARRATIVA é a crença central sendo vendida. A APRESENTAÇÃO MAGNÉTICA é como o mentorado se apresenta no final — é o momento que transforma um espectador em seguidor.
+O CONECTOR é a ponte entre o conteúdo de valor e a narrativa/posicionamento. A APRESENTAÇÃO MAGNÉTICA é como o mentorado se apresenta no final — é o momento que transforma um espectador em seguidor.
 
 Aqui está o Núcleo de Influência completo do mentorado:
 {{NUCLEO_INFLUENCIA}}
 
 ---
 
-Gere o seguinte conteúdo em TRÊS SEÇÕES. A linguagem deve ser NATURAL, FALADA e HUMANA — como se estivesse sendo dita em um Reels, não escrita em um artigo.
+Gere o seguinte conteúdo em DUAS SEÇÕES. A linguagem deve ser NATURAL, FALADA e HUMANA — como se estivesse sendo dita em um Reels, não escrita em um artigo.
 
 ═══════════════════════════════
-SEÇÃO 1: CRENÇAS CENTRAIS
-═══════════════════════════════
-
-Gere 5 crenças de alto impacto que o mentorado pode repetir em diversos vídeos. Cada crença deve ser uma frase curta, memorável e que gere identificação ou provoque reflexão.
-
-Use estas estruturas validadas (varie entre elas):
-• "X vale mais que Y" — ex: "Audiência vale mais que dinheiro"
-• Contraintuitiva — uma verdade que contradiz o senso comum — ex: "Sofrimento não traz crescimento"
-• "Não faz sentido X enquanto Y" — ex: "Não faz sentido você ter medo de reposição hormonal se passou a vida tomando anticoncepcional"
-• "Existem dois tipos de X: os que Y e os que Z" — ex: "Existem dois tipos de mulheres: as que estimulam colágeno desde cedo e as que envelhecem"
-• Frase imperativa/ordem — ex: "Pare de falar sobre tecnologia. Comece a falar sobre o problema que a tecnologia resolve."
-• "X não é sobre Y, é sobre Z" — ex: "Brechó não é sobre escassez, é sobre uma sociedade de excessos"
-
-REGRAS:
-- Cada crença deve caber em UMA FRASE (máximo 2). Brevidade inteligente: falar menos com mais punch.
-- A crença mais forte deve ser a PRIMEIRA. É a crença central — aquela que se o público acreditar, já está mais perto de comprar.
-- As crenças devem combater o [Inimigo] e reforçar a [Solução] do mentorado.
-- NÃO use crenças genéricas que qualquer pessoa poderia falar. Devem ser específicas ao nicho.
-- Se o mentorado já tem crenças mencionadas no perfil, MELHORE-AS (mais punch, mais específicas, mais curtas).
-
-═══════════════════════════════
-SEÇÃO 2: CONECTORES DE NARRATIVA
+SEÇÃO 1: CONECTORES DE NARRATIVA
 ═══════════════════════════════
 
 Gere 3 blocos de "Conector + Narrativa" diferentes. Cada bloco é o trecho que vem LOGO APÓS o conteúdo do vídeo e ANTES da apresentação magnética.
@@ -129,30 +108,22 @@ EXEMPLO DO ELIAS (para referência de tom e estrutura):
 "Então, compartilha esse vídeo com todo profissional que você conhece. E você precisa entender o seguinte: audiência vale mais que dinheiro. Porque o profissional que tem audiência nunca mais vai depender de algoritmo, de agência ou de indicação. Ele se torna o próprio canal de vendas."
 
 ═══════════════════════════════
-SEÇÃO 3: APRESENTAÇÕES MAGNÉTICAS
+SEÇÃO 2: APRESENTAÇÕES MAGNÉTICAS
 ═══════════════════════════════
 
-Gere 5 apresentações magnéticas diferentes usando as fórmulas validadas abaixo. Cada uma deve ser COMPLETA e PRONTA PARA USAR no final de um Reels.
+Gere 3 apresentações magnéticas diferentes usando as fórmulas validadas abaixo. Cada uma deve ser COMPLETA e PRONTA PARA USAR no final de um Reels.
 
 FÓRMULA 1 — DIRETA + BENEFÍCIOS:
 "Eu sou [Nome], [profissão/especialidade], e eu estou aqui para ajudar [público] a [benefício 1], [benefício 2] e [benefício 3]."
 (Referência: Bruno Andrade — "clientes que te pagam mais, te dão menos trabalho e geram mais resultado")
 
-FÓRMULA 2 — EMPATIA + DOR (modelo Veridiana):
+FÓRMULA 2 — EMPATIA + DOR:
 "Eu sou [Nome] e eu sei que você [descrição vívida da dor/situação atual]. Por isso eu estou aqui para te mostrar o caminho para [solução/desejo]."
 (Referência: Veridiana — "eu sei que você se sente solitário e exausto por liderar a geração mais rebelde da história")
 
 FÓRMULA 3 — CRENÇA FILOSÓFICA (INDIGNAÇÃO):
 "Eu sou [Nome], [profissão]. E não faz sentido [problema filosófico/indignação]. Se você está comigo nessa, me segue que eu vou te mostrar [caminho]."
 (Referência: Elias — "Não faz sentido os bons estarem no anonimato enquanto os ruins têm alcance")
-
-FÓRMULA 4 — BREVIDADE INTELIGENTE (ultra-enxuta):
-Uma versão em NO MÁXIMO 2 frases que comunica a transformação de forma seca e poderosa. Sem enrolação.
-(Referência: "Eu sou Euriller Jubé e eu tô aqui pra te ajudar a construir o negócio digital do futuro usando as ferramentas desse século pra ganhar muito dinheiro fazendo o que Deus te chamou pra fazer.")
-
-FÓRMULA 5 — CRENÇA CENTRAL + CONVITE:
-"Eu sou [Nome], [profissão]. E [crença central mais forte]. Me segue que eu vou te provar."
-(Referência: usar a crença #1 gerada na Seção 1)
 
 REGRAS PARA TODAS AS APRESENTAÇÕES:
 - Tom HUMANO e CONVERSADO — como se estivesse falando com alguém, não lendo um texto.
@@ -166,13 +137,6 @@ REGRAS PARA TODAS AS APRESENTAÇÕES:
 
 FORMATO DE SAÍDA:
 Retorne o conteúdo organizado exatamente assim, com os separadores e títulos:
-
-## CRENÇAS CENTRAIS
-1. [crença mais forte — a central]
-2. [crença 2]
-3. [crença 3]
-4. [crença 4]
-5. [crença 5]
 
 ## CONECTORES DE NARRATIVA
 
@@ -194,12 +158,6 @@ Retorne o conteúdo organizado exatamente assim, com os separadores e títulos:
 [apresentação completa]
 
 ### Opção 3 — Indignação Filosófica
-[apresentação completa]
-
-### Opção 4 — Brevidade Inteligente
-[apresentação completa]
-
-### Opção 5 — Crença Central
 [apresentação completa]
 
 MUITO IMPORTANTE: Retorne APENAS o conteúdo gerado no formato acima. Não inclua introduções, saudações, conversas, explicações ou perguntas finais. Entregue diretamente e unicamente o conteúdo final.`;
