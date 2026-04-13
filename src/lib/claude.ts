@@ -35,104 +35,214 @@ export async function callClaude(prompt: string, signal?: AbortSignal): Promise<
 
 export const EXTRACT_PROFILE_PROMPT = `Você é um estrategista sênior do "Método Audience" criado por Elias Maman. Sua missão é extrair o NÚCLEO DE INFLUÊNCIA completo de um mentorado a partir da transcrição de uma sessão de diagnóstico/mentoria.
 
-O Núcleo de Influência é o mapa de comunicação estratégico que define TUDO sobre o posicionamento do mentorado: quem ele é, quem ele ajuda, qual dor resolve, quem é o inimigo, qual a solução, quais crenças defende e como se apresenta.
+O Núcleo de Influência é o mapa de comunicação estratégico criado pelo Elias Maman que define o posicionamento completo do mentorado. Ele é construído passo a passo seguindo a sequência exata abaixo.
 
-REGRAS DE EXTRAÇÃO:
-1. O INIMIGO nunca pode ser a própria pessoa/público. Deve ser um comportamento, uma indústria, um hábito, uma mentalidade ou uma força externa que causa a dor. Ex: "o mundo de 3 segundos", "a geração mais rebelde da história", "os princípios modernos de relacionamento".
-2. As SOLUÇÕES ALTERNATIVAS são coisas que o público JÁ TENTOU e que NÃO FUNCIONARAM. São tentativas frustradas que geram identificação.
-3. A MENTIRA/CRENÇA ERRADA é algo que o público ACREDITA que é verdade mas NÃO É. Deve ser específica e gerar um "soco" de reconhecimento.
-4. O PROBLEMA FILOSÓFICO segue a estrutura "Não faz sentido [situação injusta/absurda]". Deve gerar indignação e identificação imediata.
-5. Os BENEFÍCIOS devem ser tangíveis, específicos e dimensionados — como os do Bruno Andrade: "clientes que te pagam mais, te dão menos trabalho e geram mais resultado". NÃO use termos vagos como "qualidade de vida" ou "bem-estar".
-6. As CRENÇAS CENTRAIS são frases de alto impacto que o mentorado defende e pode repetir em vários vídeos. Podem seguir estruturas como: "X vale mais que Y", "Não faz sentido X enquanto Y", "Existem dois tipos de X: os que Y e os que Z", ou frases contraintuitivas.
-7. Se algum campo não for mencionado explicitamente na transcrição, DEDUZA com inteligência a partir do contexto. Se realmente não houver informação, use null.
+═══════════════════════════════
+SEQUÊNCIA DO NÚCLEO DE INFLUÊNCIA (na ordem exata do método)
+═══════════════════════════════
+
+1. NOME — Qual o nome do mentorado?
+2. ESPECIALIDADE — O que ele faz? Profissão ou especialidade.
+3. TERMO PRÓPRIO — Ele se identifica por algum termo? (ex: "especialista em audiência", "a nutricionista do alto rendimento"). Opcional.
+4. PÚBLICO-ALVO — Quem ele ajuda? Seja ESPECÍFICO. (ex: "donos de brechó", "mulheres 40+ na menopausa", "bons profissionais no anonimato", "líderes de empresas")
+5. DOR PRINCIPAL — Qual a principal dor que ele resolve? Obrigatória. Deve ser específica e emocional.
+6. INIMIGO — Quem é o CAUSADOR dessa dor?
+
+   REGRA CRÍTICA DO MÉTODO: O inimigo NUNCA pode ser a própria pessoa/público. Deve ser um comportamento, uma indústria, um hábito, uma mentalidade ou uma força externa.
+   - "Não é você, é isso que você faz que está te prejudicando" (Elias)
+   - Ex do Elias: "o mundo de 3 segundos" (causador do anonimato dos bons profissionais)
+   - Ex da Veridiana: "a geração mais rebelde da história" (causadora da dor dos líderes)
+   - Ex do Cacá Montanz: "os princípios modernos de relacionamento"
+   - Ex da Micheline: "o hábito de ficar o dia inteiro sentada"
+   Se for um comportamento da pessoa, SEPARE: culpe o comportamento, não a pessoa.
+
+7. NOME DO INIMIGO — Um nome "sexy" ou marcante para o inimigo. (ex: "o século da preguiça", "cegueira funcional", "a maldição do diploma", "a síndrome do like"). Opcional mas poderoso.
+
+8. SOLUÇÕES ALTERNATIVAS — O que o público JÁ TENTOU e NÃO FUNCIONOU?
+   O objetivo é gerar IDENTIFICAÇÃO: "se eu consigo te explicar por que a sua tentativa falhou, você abre a porta para ouvir mais sobre o que eu tenho para te dizer" (Elias).
+   - Ex do Elias: contratar agência, fazer tráfego pago, fazer feed bonitinho cheio de carrossel
+   - Ex do Euriller: arrumar lançador, comprar cursos de marketing, postar aleatoriamente
+   - Ex da Ana (brechó): publicar o máximo de produtos, investir em e-commerce desatualizado, baixar preço
+
+9. MENTIRA/CRENÇA ERRADA — A MAIOR mentira que o público acredita.
+   Deve ser ESPECÍFICA e gerar um "soco" de reconhecimento imediato.
+   - Ex: "seguro de vida é só para a morte"
+   - Ex: "esteira emagrece" (Raquel Quartieiro)
+   - Ex: "preenchimento trata flacidez"
+   - Ex: "se eu não tô presente, o negócio não anda"
+   DICA: pegue os assuntos virais do nicho e pergunte "quais são as mentiras sobre esse assunto?"
+
+10. PROBLEMA FILOSÓFICO — A frase de INDIGNAÇÃO. Estrutura: "Não faz sentido [situação injusta/absurda]"
+    Deve gerar indignação IMEDIATA e identificação.
+    - Elias: "Não faz sentido os bons profissionais estarem no anonimato enquanto os ruins têm voz"
+    - Tributarista: "Não faz sentido as empresas pequenas pagarem X de imposto enquanto as grandes pagam Y"
+    - Vanessa: "Não faz sentido você ter medo de fazer reposição hormonal se passou a vida inteira tomando anticoncepcional"
+    - Márcio: "Não faz sentido viver a vida inteira sem saber que é autista"
+
+11. SOLUÇÃO — É a ENGENHARIA REVERSA da dor. Se o problema é X, a solução é o oposto.
+    - Elias: dor = anonimato → solução = "empacotar seu conteúdo pro mundo de 3 segundos"
+    - Cacá: dor = "dedo podre" → solução = "se relacionar com base nos princípios de quem criou os relacionamentos"
+    - Euriller: solução = "criar o negócio digital do futuro"
+
+12. BENEFÍCIOS — 3 benefícios TANGÍVEIS e DIMENSIONADOS da solução.
+    REGRA: NUNCA use "qualidade de vida", "bem-estar", "crescimento pessoal" ou termos genéricos.
+    Os benefícios devem ser tão concretos que a pessoa visualize imediatamente.
+    - Bruno Andrade: "clientes que te pagam mais, te dão menos trabalho e geram mais resultado"
+    - Elias: "uma audiência que te respeita, confia e compra de você"
+    - Marcelo Capela: "secar o bucho em 15 dias, em casa, sem equipamentos"
+
+13. DESEJO/TRANSFORMAÇÃO — O resultado maior que a pessoa alcança.
+
+14. NOME DO MÉTODO — Se existir. Opcional.
+
+15. NOVA CRENÇA — A crença central mais forte. Se o público acreditar NISSO, já está mais perto de comprar.
+    - Elias: "Audiência vale mais que dinheiro"
+    - Ana (brechó): "Luxo não precisa ser caro"
+    Estruturas validadas para crenças: "X vale mais que Y", contraintuitiva, "Existem dois tipos de X: os que Y e os que Z", "X não é sobre Y, é sobre Z"
 
 Extraia o Núcleo de Influência completo. Retorne APENAS um JSON válido, sem markdown, sem texto adicional:
 
 {
   "nome": "nome do mentorado",
   "especialidade": "profissão ou especialidade",
-  "termo_proprio": "termo ou título que ele usa para se identificar (ex: 'especialista em audiência', 'a nutricionista do alto rendimento'). null se não mencionado",
-  "publico_alvo": "quem ele ajuda — seja específico (ex: 'donos de brechó', 'mulheres 40+ na menopausa', 'bons profissionais no anonimato')",
-  "nome_audiencia": "nome que dá para a audiência (ex: 'cientistas da atenção'). null se não mencionado",
-  "dor_principal": "a grande dor/problema que ele resolve — específico e emocional",
-  "inimigo": "o causador da dor — NÃO pode ser a pessoa. Deve ser um comportamento, sistema, mentalidade ou força externa",
-  "nome_inimigo": "nome 'sexy' ou marcante para o inimigo (ex: 'o século da preguiça', 'cegueira funcional', 'a maldição do diploma'). null se não mencionado",
-  "solucoes_alternativas": ["lista de coisas que o público já tentou e não funcionaram — geram identificação"],
-  "mentira_crenca_errada": "a maior mentira/crença errada que o público acredita (ex: 'seguro de vida é só para a morte', 'esteira emagrece', 'preenchimento trata flacidez')",
-  "problema_filosofico": "a frase de indignação no formato 'Não faz sentido [situação absurda]' (ex: 'Não faz sentido os bons profissionais estarem no anonimato enquanto os ruins têm voz')",
-  "solucao": "a solução que o mentorado oferece — engenharia reversa da dor (ex: 'empacotar seu conteúdo pro mundo de 3 segundos', 'se relacionar com base nos princípios de quem criou os relacionamentos')",
-  "beneficios": ["3 benefícios tangíveis e específicos que a solução gera — NÃO use termos vagos"],
-  "desejo": "a transformação/desejo maior que ele entrega",
-  "nome_metodo": "nome do método/framework, se existir. null se não mencionado",
-  "crencas_centrais": ["3-5 frases de alto impacto que o mentorado defende — crenças fortes, específicas e repetíveis em vários vídeos"],
-  "nova_crenca": "a crença central mais forte — aquela que se o público acreditar, já está mais perto de comprar",
-  "historia_emocional": "história pessoal emocionante mencionada que pode ser usada em conteúdo. null se não mencionada",
-  "provas_cases": "cases de sucesso, números ou provas de resultado mencionados. null se não mencionados"
+  "termo_proprio": "termo ou título próprio. null se não mencionado",
+  "publico_alvo": "quem ele ajuda — específico",
+  "dor_principal": "a grande dor que ele resolve — específica e emocional",
+  "inimigo": "o causador da dor — NUNCA a pessoa, sempre um comportamento/sistema/força externa",
+  "nome_inimigo": "nome 'sexy' para o inimigo. null se não mencionado",
+  "solucoes_alternativas": ["coisas que o público já tentou e não funcionaram — geram identificação"],
+  "mentira_crenca_errada": "a maior mentira que o público acredita — específica, gera 'soco'",
+  "problema_filosofico": "Não faz sentido [situação injusta/absurda] — gera indignação imediata",
+  "solucao": "engenharia reversa da dor — o que o mentorado oferece",
+  "beneficios": ["3 benefícios tangíveis e dimensionados — NUNCA vagos"],
+  "desejo": "a transformação/desejo maior",
+  "nome_metodo": "nome do método. null se não mencionado",
+  "nova_crenca": "a crença central mais forte — se o público acreditar, já quer comprar"
 }
+
+Se algum campo não for mencionado explicitamente na transcrição, DEDUZA com inteligência a partir do contexto. Se realmente não houver informação, use null.
 
 TRANSCRIÇÃO:
 {{TRANSCRIPTION}}`;
 
-export const NARRATIVE_PROMPT = `Você é um Copywriter Sênior do "Método Audience" criado por Elias Maman. Sua missão é gerar 3 OPÇÕES de fechamento de Reels para um mentorado. Cada opção é um bloco completo e pronto para uso que combina: CONECTOR DE NARRATIVA + CRENÇA/NARRATIVA + APRESENTAÇÃO MAGNÉTICA + CTA FINAL.
+export const NARRATIVE_PROMPT = `Você é um Copywriter Sênior treinado no "Método Audience" criado por Elias Maman. Sua missão é gerar 3 OPÇÕES de fechamento de Reels para um mentorado.
 
-CONTEXTO DO MÉTODO:
-No Método Audience, a parte final de um Reels viral segue este fluxo contínuo (tudo junto, sem pausas):
+═══════════════════════════════
+CONTEXTO: ESTRUTURA COMPLETA DE UM REELS VIRAL (MÉTODO AUDIENCE)
+═══════════════════════════════
 
-1. CTA DE COMPARTILHAMENTO — convite para compartilhar o vídeo ("compartilha com todo [público] que você conhece")
-2. CONECTOR DE NARRATIVA — frase ponte que liga o conteúdo à narrativa ("E você precisa entender o seguinte...")
-3. CRENÇA/NARRATIVA — a ideia central sendo vendida, combatendo o inimigo e elevando a consciência para a solução (2-3 frases com convicção absoluta, como um líder de movimento)
-4. APRESENTAÇÃO MAGNÉTICA — como o mentorado se apresenta ("Eu sou [Nome]...")
-5. CTA FINAL — convite natural para seguir ("me segue que...", "já me segue aqui")
+No Método Audience, um Reels viral tem essa estrutura:
+HEADLINE → INTENSIFICADOR DO MISTÉRIO → CTA (salva) → CONTEÚDO NOTÁVEL → CTA (compartilha) → CONECTOR DE NARRATIVA → CRENÇA/NARRATIVA → APRESENTAÇÃO MAGNÉTICA → CTA FINAL (me segue)
 
-IMPORTANTE: Esses 5 elementos formam UM ÚNICO BLOCO CONTÍNUO. O espectador ouve tudo como uma sequência fluida, sem separação.
+Você vai gerar APENAS a parte final (do CTA de compartilhamento até o CTA final). Essa parte final funciona como UM ÚNICO BLOCO CONTÍNUO — é uma fala fluida, sem pausas ou separações.
 
-EXEMPLO REAL DA VERIDIANA (referência de como o bloco completo funciona):
+═══════════════════════════════
+O QUE É CADA ELEMENTO DO FECHAMENTO
+═══════════════════════════════
+
+1. CTA DE COMPARTILHAMENTO — Puxa o público-alvo para o vídeo:
+   "Compartilha esse vídeo com todo [público] que você conhece"
+   "Manda pra aquele [tipo de pessoa] que precisa ouvir isso"
+
+2. CONECTOR DE NARRATIVA — A ponte entre o conteúdo e a narrativa. Frases que funcionam:
+   • "E você precisa entender o seguinte..."
+   • "E o que eu preciso que você entenda é..."
+   • "Mas antes de sair desse vídeo, entenda uma coisa..."
+   O Elias usa MUITO: "Compartilha com todo [público] que você conhece. E você precisa entender o seguinte..."
+
+3. CRENÇA/NARRATIVA — A ideia central que você está vendendo. É a crença combatendo o inimigo e elevando a consciência. Tom de CONVICÇÃO ABSOLUTA, como um líder de movimento. 2-3 frases no máximo.
+
+4. APRESENTAÇÃO MAGNÉTICA — Como o mentorado se apresenta. Existem várias fórmulas (detalhadas abaixo).
+
+5. CTA FINAL — Convite natural para seguir: "Me segue aqui", "Já me segue e acompanha meus próximos conteúdos", "Se faz sentido, me segue"
+
+═══════════════════════════════
+AS FÓRMULAS DE APRESENTAÇÃO MAGNÉTICA (direto da imersão do Elias)
+═══════════════════════════════
+
+FÓRMULA 1 — DIRETA + BENEFÍCIOS (a mais básica e eficiente):
+Nome + Profissão + "estou aqui para [tirar da dor] e [levar pro resultado]"
+Os benefícios devem ser TANGÍVEIS E DIMENSIONADOS.
+
+Exemplos reais da imersão:
+- Bruno Andrade: "Eu sou o Bruno Andrade, especialista em posicionamento, e eu te ajudo a atrair clientes que te pagam mais, te dão menos trabalho e te dão mais resultado."
+- Elias: "Eu sou o Elias Maman, especialista em audiência, e eu estou aqui para te tirar do anonimato e te fazer construir uma audiência que te respeita, confia e compra de você."
+- Marcelo Capela: "Eu sou Marcelo Capela, especialista em emagrecimento, e ajudo a secar o seu bucho em casa, sem equipamentos, em 15 dias."
+- Leandro Zucchi: "Ajudo donos de negócios presos no operacional a transformar tecnologia em menos custo, mais venda e mais tempo."
+
+Opcionais que podem ser adicionados: quem você ajuda, nome do método, cases/provas.
+
+REGRA ABSOLUTA: NUNCA use "qualidade de vida", "bem-estar", "crescimento pessoal" ou termos genéricos nos benefícios.
+
+FÓRMULA 2 — EMPATIA + DOR (modelo Veridiana):
+"Eu sou [Nome] e eu sei que você [descrição VÍVIDA da dor/situação]. Por isso eu estou aqui para te mostrar o caminho para [solução/benefícios]."
+
+Exemplos reais:
+- Veridiana: "Meu nome é Veridiana Cavalieri e eu sei que você se sente solitário e exausto por liderar a geração mais rebelde da história. Por isso eu estou aqui para te mostrar o caminho para construir uma equipe que te admira, te respeita e caminha junto com você."
+- Elias (adaptação): "Eu sou Elias Maman e eu sei que você é um bom profissional, mas que você está silenciado aqui no Instagram. Eu sei que você estudou pra caramba, mas você não tem voz. Calma que eu vou te ajudar a empacotar o seu conteúdo para construir uma audiência que te respeita, confia e compra de você."
+- Cristiane Bonelli (adaptação do Elias): "Eu sou a Cristiane Bonelli e eu sei que você está arrastando um sofrimento dentro de você por muito tempo."
+
+A chave é que a pessoa pense: "caramba, ela está lendo a minha situação".
+
+FÓRMULA 3 — INDIGNAÇÃO FILOSÓFICA:
+"Eu sou [Nome], [profissão]. E não faz sentido [problema filosófico]. Se você está comigo nessa, me segue."
+
+Exemplos reais:
+- Elias: "Eu sou o Elias Maman, especialista em audiência. E não faz sentido os bons profissionais estarem no anonimato, enquanto os ruins estão assim. Então já me segue se você está comigo nessa."
+- Adaptação: "E não faz sentido você ter medo de fazer reposição hormonal se passou a vida inteira tomando anticoncepcional."
+
+═══════════════════════════════
+EXEMPLOS COMPLETOS DE BLOCOS DE FECHAMENTO (referência de como tudo flui junto)
+═══════════════════════════════
+
+VERIDIANA (bloco completo — o melhor exemplo da imersão):
 "Então é muito importante que você compartilhe esse vídeo com todos os líderes que você conhece. E você precisa entender o seguinte: quando você passa a mão na cabeça de um funcionário ruim, você está desrespeitando um bom. Cultura é feita por líderes que têm valores claros e fortes. Meu nome é Veridiana Cavalieri e eu sei que você se sente solitário e exausto por liderar a geração mais rebelde da história. Por isso eu estou aqui para te mostrar o caminho para construir uma equipe que te admira, te respeita e caminha junto com você. Então, já me segue e acompanhe meus próximos conteúdos."
 
-EXEMPLO REAL DO ELIAS:
+ELIAS (bloco completo):
 "Então, compartilha esse vídeo com todo profissional que você conhece. E você precisa entender o seguinte: audiência vale mais que dinheiro. Porque o profissional que tem audiência nunca mais vai depender de algoritmo, de agência ou de indicação. Ele se torna o próprio canal de vendas. Eu sou o Elias Maman, especialista em audiência, e eu estou aqui para te tirar do anonimato e te fazer construir uma audiência que te respeita, confia e compra de você. Me segue aqui."
 
-Perceba: o conector, a crença, a apresentação e o CTA fluem como uma fala única e natural.
+EXEMPLO COM CRENÇA DO INTESTINO (construído ao vivo na imersão):
+"Então, compartilha com toda mulher que você conhece. E você precisa entender o seguinte. Você não é aquilo que você come. Você é o que o seu intestino absorve. E tem muita gente ficando doente comendo bem e suplementando. [apresentação magnética]. Me segue aqui."
+
+Perceba: tudo flui como UMA FALA CONTÍNUA. É como se a pessoa estivesse falando naturalmente, sem parar.
+
+═══════════════════════════════
+PRINCÍPIO DA BREVIDADE INTELIGENTE
+═══════════════════════════════
+
+Conceito central do Elias: "Se dá pra tirar uma palavra sem perder sentido, tire."
+
+Exemplo da imersão — Leandro Zucchi disse: "transformar tecnologia em resultado real. Menos custo, mais venda e mais tempo."
+O Elias cortou "resultado real": "Por que ele está dizendo resultado real se vai dizer depois o que é resultado real? Deletado."
+Ficou: "transformar tecnologia em menos custo, mais venda e mais tempo."
+
+Aplique isso em TUDO que você escrever. Cada palavra deve merecer estar ali.
+
+═══════════════════════════════
 
 Aqui está o Núcleo de Influência completo do mentorado:
 {{NUCLEO_INFLUENCIA}}
 
 ---
 
-Gere 3 OPÇÕES de fechamento de Reels. Cada opção deve usar uma fórmula de apresentação magnética diferente:
-
-OPÇÃO 1 — CONECTOR + APRESENTAÇÃO DIRETA COM BENEFÍCIOS:
-Use a fórmula: Nome + Profissão/Especialidade + "estou aqui para ajudar [público] a [benefício 1], [benefício 2] e [benefício 3]"
-Os benefícios devem ser TANGÍVEIS e DIMENSIONADOS — como "clientes que te pagam mais, te dão menos trabalho e geram mais resultado" (Bruno Andrade). NUNCA use "qualidade de vida", "bem-estar" ou termos genéricos.
-
-OPÇÃO 2 — CONECTOR + APRESENTAÇÃO DE EMPATIA COM DOR:
-Use a fórmula: "Eu sou [Nome] e eu sei que você [descrição vívida da dor/situação atual]. Por isso eu estou aqui para te mostrar o caminho para [solução/desejo]."
-Como a Veridiana: "eu sei que você se sente solitário e exausto por liderar a geração mais rebelde da história"
-
-OPÇÃO 3 — CONECTOR + APRESENTAÇÃO DE INDIGNAÇÃO FILOSÓFICA:
-Use a fórmula: "Eu sou [Nome], [profissão]. E não faz sentido [problema filosófico]. Se você está comigo nessa, me segue."
-Como o Elias: "Não faz sentido os bons estarem no anonimato enquanto os ruins têm alcance"
-
-REGRAS:
-- Cada opção deve ser UM BLOCO CONTÍNUO com todos os elementos juntos (conector → crença → apresentação → CTA)
-- Use conectores variados entre as opções: "Compartilha com todo [público] que você conhece e...", "E você precisa entender o seguinte...", "Mas antes de sair desse vídeo, entenda uma coisa..."
-- Tom HUMANO e CONVERSADO — como se estivesse FALANDO em um Reels, não escrevendo um artigo
-- BREVIDADE INTELIGENTE: se dá pra tirar uma palavra sem perder sentido, tire. Falar menos com mais punch.
-- A crença/narrativa deve combater o [Inimigo] do mentorado e reforçar a [Solução]
-- Cada bloco deve fazer a pessoa pensar: "eu PRECISO seguir essa pessoa"
-
-FORMATO DE SAÍDA:
+Gere 3 OPÇÕES de fechamento de Reels. Cada opção usa uma fórmula de apresentação diferente, mas TODAS devem ser blocos completos e contínuos (CTA compartilhamento → Conector → Crença → Apresentação → CTA final).
 
 ### Opção 1 — Direta + Benefícios
-[bloco completo: conector + crença + apresentação + CTA, tudo junto como uma fala contínua]
+[bloco completo como fala contínua — use Fórmula 1]
 
 ### Opção 2 — Empatia + Dor
-[bloco completo: conector + crença + apresentação + CTA, tudo junto como uma fala contínua]
+[bloco completo como fala contínua — use Fórmula 2]
 
 ### Opção 3 — Indignação Filosófica
-[bloco completo: conector + crença + apresentação + CTA, tudo junto como uma fala contínua]
+[bloco completo como fala contínua — use Fórmula 3]
 
-MUITO IMPORTANTE: Retorne APENAS as 3 opções no formato acima. Sem introduções, sem explicações, sem perguntas finais. Entregue diretamente o conteúdo final.`;
+REGRAS FINAIS:
+- Tom HUMANO e CONVERSADO — como se estivesse FALANDO em um Reels, NÃO escrevendo artigo
+- Use conectores VARIADOS entre as 3 opções (não repita o mesmo conector)
+- A crença/narrativa deve combater o INIMIGO do mentorado e reforçar a SOLUÇÃO
+- BREVIDADE INTELIGENTE em tudo — corte toda palavra que não agrega
+- Cada bloco deve fazer a pessoa pensar: "eu PRECISO seguir essa pessoa"
+- Retorne APENAS as 3 opções. Sem introduções, explicações ou perguntas. Entregue direto.`;
 
 export const HEADLINE_EXAMPLES_PROMPT = `Aja como um Copywriter Sênior especialista no "Método Audience" de headlines virais para Instagram/Reels.
 

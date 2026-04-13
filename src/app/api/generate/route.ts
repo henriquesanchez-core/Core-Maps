@@ -101,7 +101,6 @@ function formatNucleo(profile: any) {
     `- Profissão/Especialidade: ${profile.especialidade || 'N/A'}`,
     profile.termo_proprio ? `- Termo/Título: ${profile.termo_proprio}` : null,
     `- Público-Alvo: ${profile.publico_alvo || 'N/A'}`,
-    profile.nome_audiencia ? `- Nome da Audiência: ${profile.nome_audiencia}` : null,
     `- Dor Principal: ${profile.dor_principal || profile.dor || 'N/A'}`,
     `- Inimigo/Causador da Dor: ${profile.inimigo || 'N/A'}`,
     profile.nome_inimigo ? `- Nome do Inimigo: ${profile.nome_inimigo}` : null,
@@ -112,10 +111,7 @@ function formatNucleo(profile: any) {
     profile.beneficios?.length > 0 ? `- Benefícios tangíveis: ${profile.beneficios.join('; ')}` : null,
     `- Desejo/Transformação: ${profile.desejo || 'N/A'}`,
     profile.nome_metodo ? `- Nome do Método: ${profile.nome_metodo}` : null,
-    profile.crencas_centrais?.length > 0 ? `- Crenças Centrais: ${profile.crencas_centrais.join(' | ')}` : null,
     `- Nova Crença principal: ${profile.nova_crenca || 'N/A'}`,
-    profile.historia_emocional ? `- História emocional: ${profile.historia_emocional}` : null,
-    profile.provas_cases ? `- Provas/Cases: ${profile.provas_cases}` : null,
   ];
   return lines.filter(Boolean).join('\n');
 }
