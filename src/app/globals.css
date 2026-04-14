@@ -166,6 +166,50 @@ body {
 .prose-premium h2,
 .prose-premium h3 {
   color: var(--gold-light);
+  margin-top: 1.8em;
+  margin-bottom: 0.8em;
+}
+
+.prose-premium p {
+  margin-top: 1.2em;
+  margin-bottom: 1.2em;
+}
+
+.prose-premium h3:first-child {
+  margin-top: 0;
+}
+
+/* Tab fade indicator for horizontal scroll */
+.tab-scroll-container {
+  position: relative;
+}
+.tab-scroll-container::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+  background: linear-gradient(to left, #050507, transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Tab content transitions */
+.tab-content-enter {
+  animation: tab-fade-in 0.3s ease-out forwards;
+}
+
+@keyframes tab-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Audio player touch-friendly seek */
+@media (hover: none) {
+  .audio-thumb {
+    opacity: 1 !important;
+  }
 }
 
 /* Hide scrollbar for tab navigation */

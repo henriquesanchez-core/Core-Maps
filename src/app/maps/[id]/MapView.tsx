@@ -188,7 +188,7 @@ function EditableMarkdown({ value, onChange, minHeight = "200px" }: { value: str
 
   return (
     <div className="group relative">
-      <div className="prose prose-invert prose-premium max-w-none text-zinc-300 leading-relaxed text-sm sm:text-base">
+      <div className="prose prose-invert prose-premium max-w-none text-zinc-300 leading-loose text-base">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>
           {value}
         </ReactMarkdown>
@@ -298,14 +298,16 @@ function TabAudioPlayer({ url, tabId, image }: { url: string; tabId: MapTabId; i
             {/* Time + bar */}
             <div className="flex-1 min-w-0 space-y-1">
               <div
-                className="h-1.5 bg-zinc-800 rounded-full cursor-pointer group relative"
+                className="h-1.5 bg-zinc-800 rounded-full cursor-pointer group relative py-2 -my-2"
                 onClick={seek}
               >
-                <div
-                  className="h-full bg-[var(--gold)] rounded-full relative transition-all"
-                  style={{ width: `${progress}%` }}
-                >
-                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="h-1.5 bg-zinc-800 rounded-full relative overflow-visible">
+                  <div
+                    className="h-full bg-[var(--gold)] rounded-full relative transition-all"
+                    style={{ width: `${progress}%` }}
+                  >
+                    <div className="audio-thumb absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
                 </div>
               </div>
               <div className="flex justify-between text-[10px] text-zinc-600 tabular-nums">
@@ -365,6 +367,20 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
   }
 
   const profile = mapData.extracted_profile
+
+  // Hide empty tabs in viewOnly mode
+  const visibleTabs = viewOnly
+    ? TABS.filter((tab) => {
+        if (tab.id === TAB_IDS.nucleo) return !!profile
+        if (tab.id === TAB_IDS.virais) return (mapData.viral_terms.length > 0 || (mapData.action_plan?.viral_term_examples ?? []).length > 0)
+        if (tab.id === TAB_IDS.referencias) return (mapData.references_data.length > 0 || mapData.video_examples.length > 0)
+        if (tab.id === TAB_IDS.headlines) return ((mapData.action_plan?.headline_examples ?? []).length > 0 || mapData.headline_structures.length > 0)
+        if (tab.id === TAB_IDS.roteiro) return (mapData.action_plan?.script_rewrites ?? []).length > 0
+        if (tab.id === TAB_IDS.playbook) return !!mapData.action_plan?.playbook
+        return true
+      })
+    : [...TABS]
+
   const [editedProfile, setEditedProfile] = useState(() => profile ? { ...profile } : null)
   const [editedNarrative, setEditedNarrative] = useState(mapData.narrative || "")
   const [editedPlaybook, setEditedPlaybook] = useState(mapData.action_plan?.playbook || "")
@@ -375,15 +391,18 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
     setDirty(true)
   }
 
-  const nucleoFieldDefs = editedProfile ? [
+  const nucleoGridFields = editedProfile ? [
     { label: "Especialidade", key: "especialidade", value: editedProfile.especialidade || "", color: "text-white", multiline: false },
     { label: "Público Alvo", key: "publico_alvo", value: editedProfile.publico_alvo || "", color: "text-white", multiline: false },
     { label: "Dor que Resolve", key: "dor_principal", value: editedProfile.dor_principal || editedProfile.dor || "", color: "text-white", multiline: true },
     { label: "Inimigo Comum", key: "inimigo", value: editedProfile.inimigo || "", color: "text-red-400", multiline: true },
     { label: "Solução", key: "solucao", value: editedProfile.solucao || "", color: "text-emerald-400", multiline: true },
     { label: "Desejo / Transformação", key: "desejo", value: editedProfile.desejo || "", color: "text-emerald-400", multiline: true },
-    { label: "Nova Crença", key: "nova_crenca", value: editedProfile.nova_crenca || "", color: "text-[var(--gold-light)]", multiline: true },
   ] : []
+
+  const nucleoHighlight = editedProfile ? {
+    label: "Nova Crença", key: "nova_crenca", value: editedProfile.nova_crenca || "", color: "text-[var(--gold-light)]", multiline: true,
+  } : null
 
   const nucleoAudio = tabAudios[TAB_IDS.nucleo]
   const viraisAudio = tabAudios[TAB_IDS.virais]
@@ -541,25 +560,27 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
       {/* Tab Navigation */}
       <nav className="sticky top-[57px] z-40 bg-[#050507]/90 backdrop-blur-xl border-b border-white/[0.06]">
         <div className="max-w-5xl mx-auto px-3 sm:px-6">
-          <div className="flex gap-1 overflow-x-auto scrollbar-hide py-2">
-            {TABS.map((tab) => {
-              const Icon = tab.icon
-              const isActive = activeTab === tab.id
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap transition-all cursor-pointer shrink-0
-                    ${isActive
-                      ? "bg-[var(--gold)]/10 text-[var(--gold)] border border-[var(--gold)]/20"
-                      : "text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.03]"
-                    }`}
-                >
-                  <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  {tab.label}
-                </button>
-              )
-            })}
+          <div className="tab-scroll-container">
+            <div className="flex gap-1 overflow-x-auto scrollbar-hide py-2">
+              {visibleTabs.map((tab) => {
+                const Icon = tab.icon
+                const isActive = activeTab === tab.id
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap transition-all cursor-pointer shrink-0
+                      ${isActive
+                        ? "bg-[var(--gold)]/15 text-[var(--gold)] border border-[var(--gold)]/30 shadow-sm shadow-[var(--gold)]/10"
+                        : "text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.03]"
+                      }`}
+                  >
+                    <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    {tab.label}
+                  </button>
+                )
+              })}
+            </div>
           </div>
         </div>
       </nav>
@@ -569,7 +590,7 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
 
         {/* ═══ TAB: Núcleo de Influência ═══ */}
         {activeTab === TAB_IDS.nucleo && (
-          <div className="space-y-12 animate-fade-up">
+          <div className="space-y-12 tab-content-enter">
             {typeof nucleoAudio === "string" && (
               <TabAudioPlayer url={nucleoAudio} tabId={TAB_IDS.nucleo} image={speakerImage} />
             )}
@@ -598,26 +619,47 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
                       </div>
                     )}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {nucleoFieldDefs.map((field, i) => (
+                      {nucleoGridFields.map((field, i) => (
                         <div key={i}>
-                          <p className="text-[10px] text-zinc-600 uppercase tracking-[0.15em] font-semibold mb-1.5">
+                          <p className="text-xs text-zinc-500 uppercase tracking-[0.15em] font-semibold mb-2">
                             {field.label}
                           </p>
                           {viewOnly ? (
-                            <p className={`text-[15px] leading-relaxed font-medium ${field.color}`}>
+                            <p className={`text-[15px] leading-relaxed font-normal ${field.color}`}>
                               {field.value || <span className="text-zinc-700 italic">Não informado</span>}
                             </p>
                           ) : (
                             <EditableField
                               value={field.value || ""}
                               onChange={(val) => updateProfileField(field.key, val)}
-                              className={`text-[15px] leading-relaxed font-medium ${field.color}`}
+                              className={`text-[15px] leading-relaxed font-normal ${field.color}`}
                               multiline={field.multiline}
                             />
                           )}
                         </div>
                       ))}
                     </div>
+
+                    {/* Nova Crença — full width highlight */}
+                    {nucleoHighlight && nucleoHighlight.value && (
+                      <div className="mt-6 pt-6 border-t border-white/[0.06]">
+                        <p className="text-xs text-zinc-500 uppercase tracking-[0.15em] font-semibold mb-2">
+                          {nucleoHighlight.label}
+                        </p>
+                        {viewOnly ? (
+                          <p className="text-lg leading-relaxed font-semibold text-[var(--gold-light)]">
+                            &ldquo;{nucleoHighlight.value}&rdquo;
+                          </p>
+                        ) : (
+                          <EditableField
+                            value={nucleoHighlight.value}
+                            onChange={(val) => updateProfileField(nucleoHighlight.key, val)}
+                            className="text-lg leading-relaxed font-semibold text-[var(--gold-light)]"
+                            multiline
+                          />
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </section>
@@ -637,7 +679,7 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
                       onChange={(val) => { setEditedNarrative(val); setDirty(true) }}
                     />
                   ) : (
-                    <div className="prose prose-invert prose-premium max-w-none text-zinc-300 leading-relaxed text-sm sm:text-base">
+                    <div className="prose prose-invert prose-premium max-w-none text-zinc-300 leading-loose text-base">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {editedNarrative
                           .replace(/## CRENÇAS CENTRAIS[\s\S]*?(?=## CONECTORES|$)/i, '')
@@ -654,7 +696,7 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
 
         {/* ═══ TAB: Termos Virais ═══ */}
         {activeTab === TAB_IDS.virais && (
-          <div className="space-y-10 animate-fade-up">
+          <div className="space-y-12 tab-content-enter">
             {typeof viraisAudio === "string" && (
               <TabAudioPlayer url={viraisAudio} tabId={TAB_IDS.virais} image={speakerImage} />
             )}
@@ -722,7 +764,7 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
 
         {/* ═══ TAB: Referências ═══ */}
         {activeTab === TAB_IDS.referencias && (
-          <div className="space-y-10 animate-fade-up">
+          <div className="space-y-12 tab-content-enter">
             {typeof referenciasAudio === "string" && (
               <TabAudioPlayer
                 url={referenciasAudio}
@@ -817,37 +859,39 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
 
         {/* ═══ TAB: Headlines ═══ */}
         {activeTab === TAB_IDS.headlines && (
-          <div className="space-y-10 animate-fade-up">
+          <div className="space-y-12 tab-content-enter">
             {typeof headlinesAudio === "string" && (
               <TabAudioPlayer url={headlinesAudio} tabId={TAB_IDS.headlines} image={speakerImage} />
             )}
             {headlineExamples.length > 0 ? (
               <section>
                 <h2 className="text-xl font-bold text-white tracking-tight mb-6 flex items-center gap-3">
-                  <Type className="w-5 h-5 text-blue-400" />
+                  <Type className="w-5 h-5 text-[var(--gold)]" />
                   Estruturas de Headline
                 </h2>
                 <div className="space-y-5">
                   {headlineExamples.map((item, i) => (
-                    <div key={i} className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 sm:p-6">
-                      <div className="flex items-center gap-2.5 mb-4">
+                    <div key={i} className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-5 sm:p-6">
+                      <div className="flex items-center gap-2.5 mb-3">
                         <div className="section-number">{i + 1}</div>
-                        <span className="text-xs text-zinc-500 uppercase tracking-widest font-semibold">Estrutura</span>
+                        <span className="text-xs text-zinc-500 uppercase tracking-widest font-semibold">Headline</span>
                       </div>
-                      <p className="text-base sm:text-lg text-white font-semibold leading-relaxed mb-4">
-                        {item.structure}
-                      </p>
-                      <div className="border-t border-white/[0.06] pt-3">
-                        <p className="text-[10px] text-zinc-600 uppercase tracking-widest mb-1.5">Exemplo aplicado</p>
+                      {/* Exemplo aplicado — o principal que o cliente usa */}
+                      <div className="mb-4">
                         {viewOnly ? (
-                          <p className="text-sm text-zinc-400 italic">{item.filled_example}</p>
+                          <p className="text-base sm:text-lg text-zinc-100 font-medium leading-relaxed">{item.filled_example}</p>
                         ) : (
                           <EditableField
                             value={item.filled_example}
                             onChange={(val) => updateHeadline(i, val)}
-                            className="text-sm text-zinc-400 italic"
+                            className="text-base sm:text-lg text-zinc-100 font-medium leading-relaxed"
                           />
                         )}
+                      </div>
+                      {/* Estrutura — referência secundária */}
+                      <div className="border-t border-white/[0.06] pt-3">
+                        <p className="text-xs text-zinc-500 uppercase tracking-widest mb-1.5">Estrutura</p>
+                        <p className="text-sm text-zinc-400">{item.structure}</p>
                       </div>
                     </div>
                   ))}
@@ -856,7 +900,7 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
             ) : mapData.headline_structures.length > 0 ? (
               <section>
                 <h2 className="text-xl font-bold text-white tracking-tight mb-6 flex items-center gap-3">
-                  <Type className="w-5 h-5 text-blue-400" />
+                  <Type className="w-5 h-5 text-[var(--gold)]" />
                   Estruturas de Headline
                 </h2>
                 <div className="space-y-5">
@@ -884,14 +928,14 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
 
         {/* ═══ TAB: Roteiro ═══ */}
         {activeTab === TAB_IDS.roteiro && (
-          <div className="space-y-10 animate-fade-up">
+          <div className="space-y-12 tab-content-enter">
             {typeof roteiroAudio === "string" && (
               <TabAudioPlayer url={roteiroAudio} tabId={TAB_IDS.roteiro} image={speakerImage} />
             )}
             {scriptRewrites.length > 0 ? (
               <section>
                 <h2 className="text-xl font-bold text-white tracking-tight mb-6 flex items-center gap-3">
-                  <FileText className="w-5 h-5 text-emerald-400" />
+                  <FileText className="w-5 h-5 text-[var(--gold)]" />
                   Estrutura de Roteiro com Exemplo
                 </h2>
                 <div className="space-y-6">
@@ -960,7 +1004,7 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
 
         {/* ═══ TAB: Próximos Passos (Playbook) ═══ */}
         {activeTab === TAB_IDS.playbook && (
-          <div className="animate-fade-up">
+          <div className="tab-content-enter">
             {typeof playbookAudio === "string" && (
               <TabAudioPlayer url={playbookAudio} tabId={TAB_IDS.playbook} image={speakerImage} />
             )}
@@ -987,7 +1031,7 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
                       minHeight="300px"
                     />
                   ) : (
-                    <div className="prose prose-invert prose-premium max-w-none text-zinc-300 leading-relaxed text-sm sm:text-base">
+                    <div className="prose prose-invert prose-premium max-w-none text-zinc-300 leading-loose text-base">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {editedPlaybook}
                       </ReactMarkdown>
