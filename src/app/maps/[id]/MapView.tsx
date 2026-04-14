@@ -193,14 +193,24 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
   }
 
   const profile = mapData.extracted_profile
-  const nucleoFields = profile ? [
-    { label: "Especialidade", value: profile.termo_proprio || profile.especialidade, color: "text-white" },
-    { label: "Público Alvo", value: profile.publico_alvo, color: "text-white" },
-    { label: "Dor que Resolve", value: profile.dor_principal || profile.dor, color: "text-white" },
-    { label: "Inimigo Comum", value: profile.nome_inimigo ? `${profile.inimigo} ("${profile.nome_inimigo}")` : profile.inimigo, color: "text-red-400" },
-    profile.solucao ? { label: "Solução", value: profile.solucao, color: "text-emerald-400" } : null,
-    { label: "Desejo / Transformação", value: profile.desejo, color: "text-emerald-400" },
-  ].filter(Boolean) as { label: string; value: string; color: string }[] : []
+  const [editedProfile, setEditedProfile] = useState(() => profile ? { ...profile } : null)
+  const [editedNarrative, setEditedNarrative] = useState(mapData.narrative || "")
+  const [editedPlaybook, setEditedPlaybook] = useState(mapData.action_plan?.playbook || "")
+
+  function updateProfileField(key: string, value: string) {
+    if (!editedProfile) return
+    setEditedProfile({ ...editedProfile, [key]: value })
+    setDirty(true)
+  }
+
+  const nucleoFieldDefs = editedProfile ? [
+    { label: "Especialidade", key: "especialidade", value: editedProfile.termo_proprio || editedProfile.especialidade, color: "text-white" },
+    { label: "Público Alvo", key: "publico_alvo", value: editedProfile.publico_alvo, color: "text-white" },
+    { label: "Dor que Resolve", key: "dor_principal", value: editedProfile.dor_principal || editedProfile.dor, color: "text-white" },
+    { label: "Inimigo Comum", key: "inimigo", value: editedProfile.nome_inimigo ? `${editedProfile.inimigo} ("${editedProfile.nome_inimigo}")` : editedProfile.inimigo, color: "text-red-400" },
+    editedProfile.solucao ? { label: "Solução", key: "solucao", value: editedProfile.solucao, color: "text-emerald-400" } : null,
+    { label: "Desejo / Transformação", key: "desejo", value: editedProfile.desejo, color: "text-emerald-400" },
+  ].filter(Boolean) as { label: string; key: string; value: string; color: string }[] : []
 
   const nucleoAudio = tabAudios[TAB_IDS.nucleo]
   const viraisAudio = tabAudios[TAB_IDS.virais]
@@ -229,8 +239,10 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
             headline_examples: headlineExamples,
             viral_term_examples: viralTermExamples,
             script_rewrites: scriptRewrites,
-            playbook: mapData.action_plan?.playbook || null,
+            playbook: editedPlaybook || null,
           },
+          extracted_profile: editedProfile,
+          narrative: editedNarrative,
         }),
       })
 
@@ -265,7 +277,7 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
     } finally {
       setSaving(false)
     }
-  }, [headlineExamples, viralTermExamples, scriptRewrites, mapData.id, mapData.action_plan?.playbook, clientUpdatedAt])
+  }, [headlineExamples, viralTermExamples, scriptRewrites, mapData.id, editedPlaybook, editedProfile, editedNarrative, clientUpdatedAt])
 
   function updateHeadline(index: number, newValue: string) {
     const updated = [...headlineExamples]
@@ -411,21 +423,37 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
 
                 <div className="premium-border rounded-2xl">
                   <div className="bg-[#0a0a0f] rounded-2xl p-5 sm:p-8 space-y-5 sm:space-y-6">
-                    {profile.nome && (
+                    {editedProfile?.nome && (
                       <div className="text-center pb-6 border-b border-white/[0.06]">
                         <p className="text-xs text-zinc-600 uppercase tracking-widest mb-2">Nome</p>
-                        <p className="text-2xl font-bold gold-shimmer">{profile.nome}</p>
+                        {viewOnly ? (
+                          <p className="text-2xl font-bold gold-shimmer">{editedProfile.nome}</p>
+                        ) : (
+                          <EditableField
+                            value={editedProfile.nome}
+                            onChange={(val) => updateProfileField("nome", val)}
+                            className="text-2xl font-bold gold-shimmer justify-center"
+                          />
+                        )}
                       </div>
                     )}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {nucleoFields.map((field, i) => (
+                      {nucleoFieldDefs.map((field, i) => (
                         <div key={i}>
                           <p className="text-[10px] text-zinc-600 uppercase tracking-[0.15em] font-semibold mb-1.5">
                             {field.label}
                           </p>
-                          <p className={`text-[15px] leading-relaxed font-medium ${field.color}`}>
-                            {field.value || <span className="text-zinc-700 italic">Não informado</span>}
-                          </p>
+                          {viewOnly ? (
+                            <p className={`text-[15px] leading-relaxed font-medium ${field.color}`}>
+                              {field.value || <span className="text-zinc-700 italic">Não informado</span>}
+                            </p>
+                          ) : (
+                            <EditableField
+                              value={field.value || ""}
+                              onChange={(val) => updateProfileField(field.key, val)}
+                              className={`text-[15px] leading-relaxed font-medium ${field.color}`}
+                            />
+                          )}
                         </div>
                       ))}
                     </div>
@@ -435,21 +463,29 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
             )}
 
             {/* Fechamento de Reels — Conector + Apresentação Magnética */}
-            {mapData.narrative && (
+            {(editedNarrative || mapData.narrative) && (
               <section>
                 <h2 className="text-xl font-bold text-white tracking-tight mb-6 flex items-center gap-3">
                   <Target className="w-5 h-5 text-[var(--gold)]" />
                   Fechamento de Reels
                 </h2>
                 <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 sm:p-8 md:p-10">
-                  <div className="prose prose-invert prose-premium max-w-none text-zinc-300 leading-relaxed text-sm sm:text-base">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {mapData.narrative
-                        .replace(/## CRENÇAS CENTRAIS[\s\S]*?(?=## CONECTORES|$)/i, '')
-                        .replace(/(Qual|E qual) d(ess|est)as.*?(\?|!)/gi, '')
-                        .trim()}
-                    </ReactMarkdown>
-                  </div>
+                  {!viewOnly ? (
+                    <textarea
+                      value={editedNarrative}
+                      onChange={(e) => { setEditedNarrative(e.target.value); setDirty(true) }}
+                      className="w-full bg-transparent text-zinc-300 leading-relaxed text-sm sm:text-base resize-y min-h-[200px] focus:outline-none focus:ring-1 focus:ring-[var(--gold)]/30 rounded-lg p-2 -m-2"
+                    />
+                  ) : (
+                    <div className="prose prose-invert prose-premium max-w-none text-zinc-300 leading-relaxed text-sm sm:text-base">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {editedNarrative
+                          .replace(/## CRENÇAS CENTRAIS[\s\S]*?(?=## CONECTORES|$)/i, '')
+                          .replace(/(Qual|E qual) d(ess|est)as.*?(\?|!)/gi, '')
+                          .trim()}
+                      </ReactMarkdown>
+                    </div>
+                  )}
                 </div>
               </section>
             )}
@@ -759,7 +795,7 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
             {typeof playbookAudio === "string" && (
               <TabAudioPlayer url={playbookAudio} tabId={TAB_IDS.playbook} image={speakerImage} />
             )}
-            {mapData.action_plan?.playbook ? (
+            {(editedPlaybook || mapData.action_plan?.playbook) ? (
               <section>
                 <h2 className="text-xl font-bold text-white tracking-tight mb-6 flex items-center gap-3">
                   <CalendarDays className="w-5 h-5 text-[var(--gold)]" />
@@ -775,11 +811,19 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
                       <p className="text-xs text-zinc-500">Siga este playbook dia a dia para máximo resultado</p>
                     </div>
                   </div>
-                  <div className="prose prose-invert prose-premium max-w-none text-zinc-300 leading-relaxed text-sm sm:text-base">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {mapData.action_plan.playbook}
-                    </ReactMarkdown>
-                  </div>
+                  {!viewOnly ? (
+                    <textarea
+                      value={editedPlaybook}
+                      onChange={(e) => { setEditedPlaybook(e.target.value); setDirty(true) }}
+                      className="w-full bg-transparent text-zinc-300 leading-relaxed text-sm sm:text-base resize-y min-h-[300px] focus:outline-none focus:ring-1 focus:ring-[var(--gold)]/30 rounded-lg p-2 -m-2"
+                    />
+                  ) : (
+                    <div className="prose prose-invert prose-premium max-w-none text-zinc-300 leading-relaxed text-sm sm:text-base">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {editedPlaybook}
+                      </ReactMarkdown>
+                    </div>
+                  )}
                 </div>
               </section>
             ) : (

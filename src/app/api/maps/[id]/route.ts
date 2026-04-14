@@ -19,35 +19,56 @@ export async function PATCH(
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const { action_plan, client_updated_at } = body as {
+  const { action_plan, client_updated_at, extracted_profile, narrative } = body as {
     action_plan?: unknown;
     client_updated_at?: unknown;
+    extracted_profile?: unknown;
+    narrative?: unknown;
   };
 
-  if (!action_plan) {
-    return NextResponse.json({ error: 'action_plan is required' }, { status: 400 });
-  }
   if (typeof client_updated_at !== 'string' || !client_updated_at.trim()) {
     return NextResponse.json({ error: 'client_updated_at is required' }, { status: 400 });
   }
 
-  if (
-    typeof action_plan !== 'object' ||
-    action_plan === null ||
-    !Array.isArray((action_plan as { headline_examples?: unknown[] }).headline_examples) ||
-    !Array.isArray((action_plan as { viral_term_examples?: unknown[] }).viral_term_examples) ||
-    !Array.isArray((action_plan as { script_rewrites?: unknown[] }).script_rewrites)
-  ) {
-    return NextResponse.json({ error: 'Invalid action_plan structure' }, { status: 400 });
+  // Build update payload with only provided fields
+  const updatePayload: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  };
+
+  if (action_plan !== undefined) {
+    if (
+      typeof action_plan !== 'object' ||
+      action_plan === null ||
+      !Array.isArray((action_plan as { headline_examples?: unknown[] }).headline_examples) ||
+      !Array.isArray((action_plan as { viral_term_examples?: unknown[] }).viral_term_examples) ||
+      !Array.isArray((action_plan as { script_rewrites?: unknown[] }).script_rewrites)
+    ) {
+      return NextResponse.json({ error: 'Invalid action_plan structure' }, { status: 400 });
+    }
+    updatePayload.action_plan = JSON.stringify(action_plan);
   }
 
-  const now = new Date().toISOString();
+  if (extracted_profile !== undefined) {
+    if (typeof extracted_profile !== 'object' || extracted_profile === null) {
+      return NextResponse.json({ error: 'Invalid extracted_profile' }, { status: 400 });
+    }
+    updatePayload.extracted_profile = extracted_profile;
+  }
+
+  if (narrative !== undefined) {
+    if (typeof narrative !== 'string') {
+      return NextResponse.json({ error: 'Invalid narrative' }, { status: 400 });
+    }
+    updatePayload.narrative = narrative;
+  }
+
+  if (Object.keys(updatePayload).length <= 1) {
+    return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
+  }
+
   const { data, error } = await supabaseAdmin
     .from('maps')
-    .update({
-      action_plan: JSON.stringify(action_plan),
-      updated_at: now,
-    })
+    .update(updatePayload)
     .eq('id', id)
     .eq('updated_at', client_updated_at)
     .select('*');
