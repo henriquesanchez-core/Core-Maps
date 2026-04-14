@@ -46,6 +46,54 @@ function formatTime(s: number) {
   return `${m}:${sec.toString().padStart(2, "0")}`
 }
 
+function EditableMarkdown({ value, onChange, minHeight = "200px" }: { value: string; onChange: (v: string) => void; minHeight?: string }) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(value)
+
+  function save() {
+    onChange(draft)
+    setEditing(false)
+  }
+
+  if (editing) {
+    return (
+      <div className="space-y-3">
+        <textarea
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          className="w-full bg-white/5 border border-[var(--gold)]/30 text-zinc-300 leading-relaxed text-sm sm:text-base rounded-lg p-4 focus:outline-none focus:ring-1 focus:ring-[var(--gold)]"
+          style={{ minHeight }}
+          autoFocus
+        />
+        <div className="flex gap-2">
+          <button onClick={save} className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium px-3 py-1.5 rounded-lg cursor-pointer transition-colors">
+            <Check className="w-3.5 h-3.5" /> Confirmar
+          </button>
+          <button onClick={() => { setDraft(value); setEditing(false) }} className="text-xs text-zinc-500 hover:text-zinc-300 px-3 py-1.5 cursor-pointer transition-colors">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="group relative">
+      <div className="prose prose-invert prose-premium max-w-none text-zinc-300 leading-relaxed text-sm sm:text-base">
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+          {value}
+        </ReactMarkdown>
+      </div>
+      <button
+        onClick={() => { setDraft(value); setEditing(true) }}
+        className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 bg-white/10 hover:bg-white/20 text-zinc-400 hover:text-white rounded-lg px-3 py-1.5 text-xs font-medium cursor-pointer transition-all no-print"
+      >
+        Editar
+      </button>
+    </div>
+  )
+}
+
 function isAnalyzedScriptRewrite(script: unknown): script is ScriptRewriteAnalyzed {
   if (!script || typeof script !== "object") return false
   return "elements" in script && Array.isArray((script as ScriptRewriteAnalyzed).elements)
@@ -204,13 +252,14 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
   }
 
   const nucleoFieldDefs = editedProfile ? [
-    { label: "Especialidade", key: "especialidade", value: editedProfile.termo_proprio || editedProfile.especialidade, color: "text-white" },
-    { label: "Público Alvo", key: "publico_alvo", value: editedProfile.publico_alvo, color: "text-white" },
-    { label: "Dor que Resolve", key: "dor_principal", value: editedProfile.dor_principal || editedProfile.dor, color: "text-white" },
-    { label: "Inimigo Comum", key: "inimigo", value: editedProfile.nome_inimigo ? `${editedProfile.inimigo} ("${editedProfile.nome_inimigo}")` : editedProfile.inimigo, color: "text-red-400" },
-    editedProfile.solucao ? { label: "Solução", key: "solucao", value: editedProfile.solucao, color: "text-emerald-400" } : null,
-    { label: "Desejo / Transformação", key: "desejo", value: editedProfile.desejo, color: "text-emerald-400" },
-  ].filter(Boolean) as { label: string; key: string; value: string; color: string }[] : []
+    { label: "Especialidade", key: "especialidade", value: editedProfile.especialidade || "", color: "text-white" },
+    { label: "Público Alvo", key: "publico_alvo", value: editedProfile.publico_alvo || "", color: "text-white" },
+    { label: "Dor que Resolve", key: "dor_principal", value: editedProfile.dor_principal || editedProfile.dor || "", color: "text-white" },
+    { label: "Inimigo Comum", key: "inimigo", value: editedProfile.inimigo || "", color: "text-red-400" },
+    { label: "Solução", key: "solucao", value: editedProfile.solucao || "", color: "text-emerald-400" },
+    { label: "Desejo / Transformação", key: "desejo", value: editedProfile.desejo || "", color: "text-emerald-400" },
+    { label: "Nova Crença", key: "nova_crenca", value: editedProfile.nova_crenca || "", color: "text-[var(--gold-light)]" },
+  ] : []
 
   const nucleoAudio = tabAudios[TAB_IDS.nucleo]
   const viraisAudio = tabAudios[TAB_IDS.virais]
@@ -465,10 +514,9 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
                 </h2>
                 <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 sm:p-8 md:p-10">
                   {!viewOnly ? (
-                    <textarea
+                    <EditableMarkdown
                       value={editedNarrative}
-                      onChange={(e) => { setEditedNarrative(e.target.value); setDirty(true) }}
-                      className="w-full bg-transparent text-zinc-300 leading-relaxed text-sm sm:text-base resize-y min-h-[200px] focus:outline-none focus:ring-1 focus:ring-[var(--gold)]/30 rounded-lg p-2 -m-2"
+                      onChange={(val) => { setEditedNarrative(val); setDirty(true) }}
                     />
                   ) : (
                     <div className="prose prose-invert prose-premium max-w-none text-zinc-300 leading-relaxed text-sm sm:text-base">
@@ -806,10 +854,10 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
                     </div>
                   </div>
                   {!viewOnly ? (
-                    <textarea
+                    <EditableMarkdown
                       value={editedPlaybook}
-                      onChange={(e) => { setEditedPlaybook(e.target.value); setDirty(true) }}
-                      className="w-full bg-transparent text-zinc-300 leading-relaxed text-sm sm:text-base resize-y min-h-[300px] focus:outline-none focus:ring-1 focus:ring-[var(--gold)]/30 rounded-lg p-2 -m-2"
+                      onChange={(val) => { setEditedPlaybook(val); setDirty(true) }}
+                      minHeight="300px"
                     />
                   ) : (
                     <div className="prose prose-invert prose-premium max-w-none text-zinc-300 leading-relaxed text-sm sm:text-base">
