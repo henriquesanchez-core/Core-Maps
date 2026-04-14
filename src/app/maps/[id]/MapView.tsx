@@ -341,11 +341,6 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
     window.scrollTo({ top: 0, behavior: "instant" })
   }
 
-  // ── If the intro is active, render it exclusively ──
-  if (showIntro) {
-    return <MapIntroScreen mapData={mapData} onEnter={handleEnterMap} />
-  }
-
   const [activeTab, setActiveTab] = useState<MapTabId>(TAB_IDS.nucleo)
   const [headlineExamples, setHeadlineExamples] = useState<HeadlineExample[]>(
     mapData.action_plan?.headline_examples ?? []
@@ -474,6 +469,12 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
     updated[scriptIndex] = { ...script, elements }
     setScriptRewrites(updated)
     setDirty(true)
+  }
+
+  // ── If the intro is active, render it exclusively ──
+  // This must be placed AFTER all hooks to prevent React hook violations.
+  if (showIntro) {
+    return <MapIntroScreen mapData={mapData} onEnter={handleEnterMap} />
   }
 
   return (
