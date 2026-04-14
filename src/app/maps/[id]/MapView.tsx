@@ -4,7 +4,7 @@ import { useState, useCallback, useRef, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import {
-  ArrowLeft, User, Flame, ExternalLink, Play, Type, FileText,
+  ArrowLeft, ArrowRight, User, Flame, ExternalLink, Play, Type, FileText,
   Save, Loader2, CalendarDays, Target,
   Users, Sparkles, Share2, Check,
 } from "lucide-react"
@@ -21,6 +21,115 @@ import type {
 import { TAB_IDS, type MapTabId } from "@/lib/constants"
 import { EditableField } from "./EditableField"
 import { EditableScript } from "./EditableScript"
+
+// ───────────────────────────────────────────────
+// Map Intro Screen (shown to clients on ?v=1)
+// ───────────────────────────────────────────────
+function MapIntroScreen({
+  mapData,
+  onEnter,
+}: {
+  mapData: MapData
+  onEnter: () => void
+}) {
+  const profile = mapData.extracted_profile
+  const name = mapData.client_data?.fullName || profile?.nome || `@${mapData.client_username}`
+  const especialidade = mapData.client_data?.fullName
+    ? (profile?.especialidade || "")
+    : (profile?.especialidade || "")
+  const avatarUrl = mapData.client_data?.profilePicUrl || null
+
+  return (
+    <div className="fixed inset-0 z-[100] bg-[#050507] flex flex-col items-center justify-center px-6 text-center overflow-hidden">
+      {/* Ambient background */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[700px] h-[700px] bg-[var(--gold)]/[0.04] blur-[180px] rounded-full" />
+        <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-purple-500/[0.03] blur-[140px] rounded-full" />
+      </div>
+      <div className="noise-overlay" />
+
+      <div className="relative z-10 flex flex-col items-center gap-6 max-w-md w-full">
+        {/* Badge */}
+        <div
+          className="intro-reveal"
+          style={{ animationDelay: "0ms" }}
+        >
+          <span className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] font-semibold text-[var(--gold)] border border-[var(--gold)]/30 rounded-full px-4 py-1.5 bg-[var(--gold)]/5">
+            <Sparkles className="w-3 h-3" />
+            Mapa Estratégico Personalizado
+          </span>
+        </div>
+
+        {/* Avatar */}
+        <div
+          className="intro-reveal intro-float"
+          style={{ animationDelay: "100ms" }}
+        >
+          <div className="profile-ring">
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={name}
+                className="relative z-10 w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover ring-4 ring-[#050507]"
+              />
+            ) : (
+              <div className="relative z-10 w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-gradient-to-br from-[var(--gold-dark)] to-[var(--gold)] flex items-center justify-center ring-4 ring-[#050507]">
+                <span className="text-3xl font-bold text-zinc-950">
+                  {name.charAt(0).toUpperCase()}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Name + Specialty */}
+        <div
+          className="intro-reveal space-y-1"
+          style={{ animationDelay: "250ms" }}
+        >
+          <h1 className="text-3xl sm:text-4xl font-bold gold-shimmer leading-tight">{name}</h1>
+          {especialidade && (
+            <p className="text-zinc-500 text-sm sm:text-base">{especialidade}</p>
+          )}
+        </div>
+
+        {/* Divider */}
+        <div
+          className="intro-reveal w-16 h-px bg-gradient-to-r from-transparent via-[var(--gold)]/50 to-transparent"
+          style={{ animationDelay: "350ms" }}
+        />
+
+        {/* Subtitle */}
+        <div
+          className="intro-reveal"
+          style={{ animationDelay: "450ms" }}
+        >
+          <p className="text-zinc-300 text-base sm:text-lg leading-relaxed max-w-sm">
+            Seja bem-vindo à sua jornada para{" "}
+            <span className="text-white font-semibold">sair do anonimato</span>{" "}
+            e se tornar{" "}
+            <span className="text-[var(--gold-light)] font-semibold">autoridade dentro do seu nicho</span>.
+          </p>
+        </div>
+
+        {/* CTA Button */}
+        <div
+          className="intro-reveal"
+          style={{ animationDelay: "600ms" }}
+        >
+          <button
+            autoFocus
+            onClick={onEnter}
+            className="group mt-2 flex items-center gap-3 bg-gradient-to-r from-[var(--gold-dark)] to-[var(--gold)] hover:from-[var(--gold)] hover:to-[var(--gold-light)] text-zinc-950 font-bold text-sm sm:text-base px-8 py-4 rounded-full shadow-lg shadow-[var(--gold)]/20 hover:shadow-[var(--gold)]/40 transition-all duration-300 hover:scale-105 cursor-pointer"
+          >
+            Iniciar Jornada
+            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 const TABS = [
   { id: TAB_IDS.nucleo, label: "Núcleo", icon: Target },
@@ -214,6 +323,25 @@ function TabAudioPlayer({ url, tabId, image }: { url: string; tabId: MapTabId; i
 export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: MapData; tabAudios?: TabAudios; speakerImage?: string | null }) {
   const searchParams = useSearchParams()
   const viewOnly = searchParams.get("v") === "1"
+
+  // ── Intro screen state (only for client-shared links) ──
+  const introKey = `map_intro_seen_${mapData.id}`
+  const [showIntro, setShowIntro] = useState<boolean>(() => {
+    if (!viewOnly) return false
+    if (typeof window === "undefined") return false
+    return !sessionStorage.getItem(introKey)
+  })
+
+  function handleEnterMap() {
+    sessionStorage.setItem(introKey, "1")
+    setShowIntro(false)
+    window.scrollTo({ top: 0, behavior: "instant" })
+  }
+
+  // ── If the intro is active, render it exclusively ──
+  if (showIntro) {
+    return <MapIntroScreen mapData={mapData} onEnter={handleEnterMap} />
+  }
 
   const [activeTab, setActiveTab] = useState<MapTabId>(TAB_IDS.nucleo)
   const [headlineExamples, setHeadlineExamples] = useState<HeadlineExample[]>(

@@ -178,6 +178,34 @@ body {
 }
 
 /* ═══════════════════════════════════════════════ */
+/* Map Intro Screen Animations                     */
+/* ═══════════════════════════════════════════════ */
+@keyframes intro-float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes intro-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes intro-pulse-ring {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.04); }
+}
+
+.intro-float { animation: intro-float 4s ease-in-out infinite; }
+.intro-reveal { animation: intro-reveal 0.7s ease-out forwards; opacity: 0; }
+.intro-pulse-ring { animation: intro-pulse-ring 3s ease-in-out infinite; }
+
+/* ═══════════════════════════════════════════════ */
 /* Print / PDF Export Styles                       */
 /* ═══════════════════════════════════════════════ */
 @media print {
