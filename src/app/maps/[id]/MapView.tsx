@@ -220,12 +220,6 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
   const playbookAudio = tabAudios[TAB_IDS.playbook]
 
   const save = useCallback(async () => {
-    if (!clientUpdatedAt) {
-      setConflictError(false)
-      setSaveError("Não foi possível validar a versão do mapa. Recarregue a página e tente novamente.")
-      return
-    }
-
     setSaving(true)
     setConflictError(false)
     setSaveError(null)
@@ -234,7 +228,7 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          client_updated_at: clientUpdatedAt,
+          client_updated_at: clientUpdatedAt || null,
           action_plan: {
             headline_examples: headlineExamples,
             viral_term_examples: viralTermExamples,

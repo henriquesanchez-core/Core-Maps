@@ -26,9 +26,8 @@ export async function PATCH(
     narrative?: unknown;
   };
 
-  if (typeof client_updated_at !== 'string' || !client_updated_at.trim()) {
-    return NextResponse.json({ error: 'client_updated_at is required' }, { status: 400 });
-  }
+  // client_updated_at can be null for maps created before versioning was added
+  const clientTs = typeof client_updated_at === 'string' && client_updated_at.trim() ? client_updated_at.trim() : null;
 
   // Build update payload with only provided fields
   const updatePayload: Record<string, unknown> = {
@@ -66,12 +65,18 @@ export async function PATCH(
     return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
   }
 
-  const { data, error } = await supabaseAdmin
+  let query = supabaseAdmin
     .from('maps')
     .update(updatePayload)
-    .eq('id', id)
-    .eq('updated_at', client_updated_at)
-    .select('*');
+    .eq('id', id);
+
+  if (clientTs) {
+    query = query.eq('updated_at', clientTs);
+  } else {
+    query = query.is('updated_at', null);
+  }
+
+  const { data, error } = await query.select('*');
 
   if (error) {
     console.error('[API] Update error:', error);
