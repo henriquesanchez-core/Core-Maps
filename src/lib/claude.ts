@@ -128,6 +128,33 @@ TRANSCRIÇÃO:
 export const NARRATIVE_PROMPT = `Você é um Copywriter Sênior treinado no "Método Audience" criado por Elias Maman. Sua missão é gerar 3 OPÇÕES de fechamento de Reels para um mentorado.
 
 ═══════════════════════════════
+DIRECIONAMENTO DO ESTRATEGISTA
+═══════════════════════════════
+
+O estrategista responsável pelo mentorado definiu o seguinte direcionamento de ângulo para essa narrativa:
+
+{{ANALYST_DIRECTION}}
+
+Se houver um direcionamento definido acima, você DEVE priorizar esse ângulo nas 3 opções geradas. Ele sobrepõe preferências genéricas — busque na transcrição e no Núcleo os dados que suportam esse ângulo específico.
+Se o campo estiver vazio ou indicar "Sem direcionamento", gere as opções com base no Núcleo e na transcrição normalmente.
+
+═══════════════════════════════
+TRANSCRIÇÃO DA CALL DE DIAGNÓSTICO
+═══════════════════════════════
+
+A seguir está a transcrição real da call de diagnóstico com o mentorado. Use os trechos mais reveladores — frases espontâneas do cliente, histórias pessoais, momentos de indignação ou clareza — para tornar a narrativa mais autêntica e com a voz real da pessoa:
+
+{{TRANSCRIPTION}}
+
+Use a transcrição para:
+- Encontrar a "frase de ouro" do cliente que pode virar crença ou conector
+- Identificar o tom de voz e o vocabulário natural da pessoa
+- Ancorar a apresentação magnética em algo real que ela disse ou viveu
+Se a transcrição estiver vazia, ignore essa seção e use apenas o Núcleo.
+
+
+
+═══════════════════════════════
 CONTEXTO: ESTRUTURA COMPLETA DE UM REELS VIRAL (MÉTODO AUDIENCE)
 ═══════════════════════════════
 

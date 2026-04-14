@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Loader2, Plus, ArrowRight } from "lucide-react"
+import { Loader2, Plus, ArrowRight, MessageSquare, Compass } from "lucide-react"
 import { TagInput } from "./TagInput"
 
 export function GenerationForm() {
@@ -58,6 +58,7 @@ export function GenerationForm() {
       clientUsername: formData.get("clientUsername"),
       referenceProfiles: formData.get("referenceProfiles"),
       transcription: formData.get("transcription"),
+      analystDirection: formData.get("analystDirection"),
       viralTerms: finalViralTerms,
       videoExamples: finalVideoExamples,
       headlineExamples: finalHeadlineExamples,
@@ -149,15 +150,46 @@ export function GenerationForm() {
           />
         </div>
 
-        {/* Transcrição */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-zinc-400">Transcrição da Call de Diagnóstico</label>
-          <textarea
-            name="transcription"
-            rows={6}
-            placeholder="Cole aqui a transcrição da chamada para a extração do núcleo de influência..."
-            className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all resize-y"
-          />
+        {/* Narrativa Block */}
+        <div className="border border-zinc-700/60 rounded-xl overflow-hidden">
+          {/* Block Header */}
+          <div className="flex items-center gap-2.5 bg-zinc-800/60 px-5 py-3 border-b border-zinc-700/60">
+            <MessageSquare className="w-4 h-4 text-blue-400 shrink-0" />
+            <p className="text-sm font-semibold text-zinc-200 tracking-wide">Narrativa</p>
+          </div>
+
+          <div className="p-5 space-y-5">
+            {/* Transcrição */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-zinc-400 flex items-center gap-1.5">
+                Transcrição da Call de Diagnóstico
+              </label>
+              <textarea
+                name="transcription"
+                rows={6}
+                placeholder="Cole aqui a transcrição da chamada para a extração do núcleo de influência..."
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all resize-y text-sm"
+              />
+            </div>
+
+            {/* Direcionamento do Estrategista */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-zinc-400 flex items-center gap-1.5">
+                <Compass className="w-3.5 h-3.5 text-amber-400" />
+                Direcionamento do Estrategista
+                <span className="text-zinc-600 text-xs font-normal">(opcional)</span>
+              </label>
+              <textarea
+                name="analystDirection"
+                rows={3}
+                placeholder="Ex: Focar no ângulo do inimigo — o algoritmo que pune os bons profissionais. Priorizar a indignão filosófica..."
+                className="w-full bg-zinc-950 border border-amber-800/30 rounded-lg p-3 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all resize-y text-sm placeholder:text-zinc-600"
+              />
+              <p className="text-[11px] text-zinc-600 leading-relaxed">
+                Defina o ângulo ou aspecto que a IA deve priorizar ao gerar a narrativa. A IA vai cruzar esse direcionamento com as informações da transcrição e do Núcleo.
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Divider */}

@@ -1,6 +1,25 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 
+export async function DELETE(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+
+  const { error } = await supabaseAdmin
+    .from('maps')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error('[API] Delete error:', JSON.stringify(error));
+    return NextResponse.json({ error: 'Failed to delete map' }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true });
+}
+
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -11,10 +30,12 @@ export async function PATCH(
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const { action_plan, extracted_profile, narrative } = body as {
+  const { action_plan, extracted_profile, narrative, name, folder_id } = body as {
     action_plan?: unknown;
     extracted_profile?: unknown;
     narrative?: unknown;
+    name?: unknown;
+    folder_id?: unknown;
   };
 
   // Build update payload with only provided fields
@@ -45,6 +66,20 @@ export async function PATCH(
       return NextResponse.json({ error: 'Invalid narrative' }, { status: 400 });
     }
     updatePayload.narrative = narrative;
+  }
+
+  if (name !== undefined) {
+    if (typeof name !== 'string') {
+      return NextResponse.json({ error: 'Invalid name' }, { status: 400 });
+    }
+    updatePayload.name = name.trim() || null;
+  }
+
+  if (folder_id !== undefined) {
+    if (folder_id !== null && typeof folder_id !== 'string') {
+      return NextResponse.json({ error: 'Invalid folder_id' }, { status: 400 });
+    }
+    updatePayload.folder_id = folder_id;
   }
 
   if (Object.keys(updatePayload).length === 0) {

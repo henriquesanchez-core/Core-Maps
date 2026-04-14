@@ -181,6 +181,7 @@ export async function POST(req: Request) {
   const clientUsername = typeof body.clientUsername === 'string' ? body.clientUsername.trim() : '';
   const referenceProfiles = typeof body.referenceProfiles === 'string' ? body.referenceProfiles.slice(0, 5000) : '';
   const transcription = typeof body.transcription === 'string' ? body.transcription.slice(0, 30000) : '';
+  const analystDirection = typeof body.analystDirection === 'string' ? body.analystDirection.slice(0, 5000) : '';
   const videoExamples = normalizeStringArray(body.videoExamples, 20, 300);
   const headlineExamples = normalizeStringArray(body.headlineExamples, 20, 200);
   const scriptExamples = normalizeStringArray(body.scriptExamples, 20, 10000);
@@ -279,7 +280,10 @@ export async function POST(req: Request) {
           const [narrativeResult, actionPlanResult] = await Promise.all([
             // Step 4: Narrativa
             (async () => {
-              const prompt = NARRATIVE_PROMPT.replace('{{NUCLEO_INFLUENCIA}}', nucleoInfo);
+              const prompt = NARRATIVE_PROMPT
+                .replace('{{NUCLEO_INFLUENCIA}}', nucleoInfo)
+                .replace('{{TRANSCRIPTION}}', transcription || 'Sem transcrição fornecida')
+                .replace('{{ANALYST_DIRECTION}}', analystDirection || 'Sem direcionamento — use o Núcleo e a transcrição livremente');
               return callClaude(prompt, master.signal);
             })(),
             // Step 5: Exemplos IA
@@ -386,6 +390,7 @@ export async function POST(req: Request) {
             reference_profiles: referenceProfiles || null,
             viral_term: JSON.stringify(viralTermsArray),
             transcription: transcription || null,
+            analyst_direction: analystDirection || null,
             viral_format: JSON.stringify(contentInputs),
             client_data: clientData,
             references_data: referencesData.length > 0 ? referencesData : null,
