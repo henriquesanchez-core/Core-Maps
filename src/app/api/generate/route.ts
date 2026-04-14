@@ -387,6 +387,7 @@ export async function POST(req: Request) {
           .from('maps')
           .insert({
             client_username: cleanUsername,
+            name: clientData.fullName || cleanUsername,
             reference_profiles: referenceProfiles || null,
             viral_term: JSON.stringify(viralTermsArray),
             transcription: transcription || null,
