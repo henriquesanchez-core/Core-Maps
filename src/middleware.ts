@@ -2,16 +2,11 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { verifyToken } from '@/lib/auth'
 
-const MAP_MUTATION_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
-
 function isProtectedRequest(req: NextRequest) {
   const { pathname } = req.nextUrl
 
   if (pathname === '/settings') return true
   if (pathname.startsWith('/api/settings/')) return true
-  if (pathname.startsWith('/api/maps/')) {
-    return MAP_MUTATION_METHODS.has(req.method.toUpperCase())
-  }
 
   return false
 }
@@ -44,5 +39,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/settings', '/api/maps/:path*', '/api/settings/:path*'],
+  matcher: ['/settings', '/api/settings/:path*'],
 }

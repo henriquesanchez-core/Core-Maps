@@ -1,18 +1,10 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
-import { requireAdmin } from '@/lib/auth';
 
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    await requireAdmin(req);
-  } catch (error) {
-    if (error instanceof Response) return error;
-    return NextResponse.json({ error: 'Failed to validate authentication.' }, { status: 500 });
-  }
-
   const { id } = await params;
   const body = await req.json().catch(() => null);
   if (!body || typeof body !== 'object') {
