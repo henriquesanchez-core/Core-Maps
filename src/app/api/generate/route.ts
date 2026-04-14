@@ -242,10 +242,29 @@ export async function POST(req: Request) {
         ]);
         sendProgress(2, 'Perfis buscados.');
 
-        // Upload avatar to avoid expiring Instagram CDN URLs
+        // Upload avatars to Supabase Storage to avoid expiring Instagram CDN URLs
+        const uploadPromises: Promise<void>[] = []
+
         if (clientData.profilePicUrl) {
-          const storedUrl = await uploadProfilePic(cleanUsername, clientData.profilePicUrl)
-          if (storedUrl) clientData.profilePicUrl = storedUrl
+          uploadPromises.push(
+            uploadProfilePic(cleanUsername, clientData.profilePicUrl).then(url => {
+              if (url) clientData.profilePicUrl = url
+            })
+          )
+        }
+
+        for (const ref of referencesData) {
+          if (ref.profilePicUrl && ref.username) {
+            uploadPromises.push(
+              uploadProfilePic(ref.username, ref.profilePicUrl).then(url => {
+                if (url) ref.profilePicUrl = url
+              })
+            )
+          }
+        }
+
+        if (uploadPromises.length > 0) {
+          await Promise.all(uploadPromises)
         }
 
         // STEP 3: Extract Profile from Transcription
