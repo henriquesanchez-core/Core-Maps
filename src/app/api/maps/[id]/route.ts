@@ -30,8 +30,9 @@ export async function PATCH(
   const clientTs = typeof client_updated_at === 'string' && client_updated_at.trim() ? client_updated_at.trim() : null;
 
   // Build update payload with only provided fields
+  const now = new Date().toISOString();
   const updatePayload: Record<string, unknown> = {
-    updated_at: new Date().toISOString(),
+    updated_at: now,
   };
 
   if (action_plan !== undefined) {
@@ -51,7 +52,8 @@ export async function PATCH(
     if (typeof extracted_profile !== 'object' || extracted_profile === null) {
       return NextResponse.json({ error: 'Invalid extracted_profile' }, { status: 400 });
     }
-    updatePayload.extracted_profile = extracted_profile;
+    // Clean serialize to remove any undefined values or prototype pollution
+    updatePayload.extracted_profile = JSON.parse(JSON.stringify(extracted_profile));
   }
 
   if (narrative !== undefined) {
