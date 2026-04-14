@@ -70,10 +70,11 @@ export async function PATCH(
     .update(updatePayload)
     .eq('id', id);
 
+  // Optimistic concurrency: only guard when client has a valid timestamp.
+  // The updated_at column is NOT NULL DEFAULT now(), so IS NULL never matches.
+  // When clientTs is null (old maps or first edit), skip the version check.
   if (clientTs) {
     query = query.eq('updated_at', clientTs);
-  } else {
-    query = query.is('updated_at', null);
   }
 
   const { data, error } = await query.select('*');
