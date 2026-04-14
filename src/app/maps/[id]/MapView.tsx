@@ -229,8 +229,6 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
   const [dirty, setDirty] = useState(false)
   const [copied, setCopied] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
-  const [conflictError, setConflictError] = useState(false)
-  const [clientUpdatedAt, setClientUpdatedAt] = useState<string | null>(mapData.updated_at)
 
   function copyLink() {
     const url = new URL(window.location.href)
@@ -270,14 +268,12 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
 
   const save = useCallback(async () => {
     setSaving(true)
-    setConflictError(false)
     setSaveError(null)
     try {
       const response = await fetch(`/api/maps/${mapData.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          client_updated_at: clientUpdatedAt || null,
           action_plan: {
             headline_examples: headlineExamples,
             viral_term_examples: viralTermExamples,
@@ -294,23 +290,12 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
           .json()
           .catch(() => null) as { error?: string } | null
 
-        if (response.status === 409) {
-          setConflictError(true)
-          setSaveError("Este mapa foi editado em outra sessão. Recarregue para atualizar antes de salvar novamente.")
-        } else if (response.status === 404) {
+        if (response.status === 404) {
           setSaveError("Mapa não encontrado. Recarregue a página.")
         } else {
           setSaveError(payload?.error || "Falha ao salvar alterações.")
         }
         return
-      }
-
-      const payload = await response
-        .json()
-        .catch(() => null) as { map?: { updated_at?: string | null } } | null
-
-      if (payload?.map?.updated_at) {
-        setClientUpdatedAt(payload.map.updated_at)
       }
 
       setDirty(false)
@@ -320,7 +305,7 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
     } finally {
       setSaving(false)
     }
-  }, [headlineExamples, viralTermExamples, scriptRewrites, mapData.id, editedPlaybook, editedProfile, editedNarrative, clientUpdatedAt])
+  }, [headlineExamples, viralTermExamples, scriptRewrites, mapData.id, editedPlaybook, editedProfile, editedNarrative])
 
   function updateHeadline(index: number, newValue: string) {
     const updated = [...headlineExamples]
@@ -883,14 +868,6 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
       {!viewOnly && saveError && (
         <div className="fixed bottom-24 left-4 right-4 sm:left-auto sm:right-6 sm:w-[420px] z-50 rounded-xl border border-red-500/30 bg-red-950/80 px-4 py-3 text-sm text-red-100 shadow-lg">
           <p>{saveError}</p>
-          {conflictError && (
-            <button
-              onClick={() => window.location.reload()}
-              className="mt-2 inline-flex items-center rounded-md border border-red-300/50 px-3 py-1.5 text-xs font-semibold text-red-50 hover:bg-red-900/60 transition-colors cursor-pointer"
-            >
-              Recarregar mapa
-            </button>
-          )}
         </div>
       )}
 

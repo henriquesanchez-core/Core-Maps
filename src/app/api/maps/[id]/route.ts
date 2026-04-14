@@ -19,21 +19,14 @@ export async function PATCH(
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const { action_plan, client_updated_at, extracted_profile, narrative } = body as {
+  const { action_plan, extracted_profile, narrative } = body as {
     action_plan?: unknown;
-    client_updated_at?: unknown;
     extracted_profile?: unknown;
     narrative?: unknown;
   };
 
-  // client_updated_at can be null for maps created before versioning was added
-  const clientTs = typeof client_updated_at === 'string' && client_updated_at.trim() ? client_updated_at.trim() : null;
-
   // Build update payload with only provided fields
-  const now = new Date().toISOString();
-  const updatePayload: Record<string, unknown> = {
-    updated_at: now,
-  };
+  const updatePayload: Record<string, unknown> = {};
 
   if (action_plan !== undefined) {
     if (
@@ -52,7 +45,6 @@ export async function PATCH(
     if (typeof extracted_profile !== 'object' || extracted_profile === null) {
       return NextResponse.json({ error: 'Invalid extracted_profile' }, { status: 400 });
     }
-    // Clean serialize to remove any undefined values or prototype pollution
     updatePayload.extracted_profile = JSON.parse(JSON.stringify(extracted_profile));
   }
 
@@ -63,48 +55,23 @@ export async function PATCH(
     updatePayload.narrative = narrative;
   }
 
-  if (Object.keys(updatePayload).length <= 1) {
+  if (Object.keys(updatePayload).length === 0) {
     return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
   }
 
-  let query = supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from('maps')
     .update(updatePayload)
-    .eq('id', id);
-
-  // Optimistic concurrency: only guard when client has a valid timestamp.
-  // The updated_at column is NOT NULL DEFAULT now(), so IS NULL never matches.
-  // When clientTs is null (old maps or first edit), skip the version check.
-  if (clientTs) {
-    query = query.eq('updated_at', clientTs);
-  }
-
-  const { data, error } = await query.select('*');
+    .eq('id', id)
+    .select('*');
 
   if (error) {
     console.error('[API] Update error:', JSON.stringify(error));
-    console.error('[API] Update payload keys:', Object.keys(updatePayload));
-    console.error('[API] extracted_profile type:', typeof updatePayload.extracted_profile);
-    return NextResponse.json({ error: 'Failed to update map', details: error.message, code: error.code }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to update map', details: error.message }, { status: 500 });
   }
 
   if (!data || data.length === 0) {
-    const { data: existingMap, error: existenceError } = await supabaseAdmin
-      .from('maps')
-      .select('id')
-      .eq('id', id)
-      .maybeSingle();
-
-    if (existenceError && existenceError.code !== 'PGRST116') {
-      console.error('[API] Existence check error:', existenceError);
-      return NextResponse.json({ error: 'Failed to check map state' }, { status: 500 });
-    }
-
-    if (!existingMap) {
-      return NextResponse.json({ error: 'map not found' }, { status: 404 });
-    }
-
-    return NextResponse.json({ error: 'map was modified' }, { status: 409 });
+    return NextResponse.json({ error: 'Map not found' }, { status: 404 });
   }
 
   return NextResponse.json({ map: data[0] });
