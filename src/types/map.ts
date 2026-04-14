@@ -67,7 +67,7 @@ export interface MapData {
   extracted_profile: ExtractedProfile | null
   narrative: string | null
   viral_terms: string[]
-  video_examples: string[]
+  video_examples: (string | { title: string; url: string })[]
   headline_structures: string[]
   script_examples: string[]
   action_plan: ActionPlan | null

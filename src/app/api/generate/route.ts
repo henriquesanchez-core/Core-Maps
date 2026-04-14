@@ -182,7 +182,19 @@ export async function POST(req: Request) {
   const referenceProfiles = typeof body.referenceProfiles === 'string' ? body.referenceProfiles.slice(0, 5000) : '';
   const transcription = typeof body.transcription === 'string' ? body.transcription.slice(0, 30000) : '';
   const analystDirection = typeof body.analystDirection === 'string' ? body.analystDirection.slice(0, 5000) : '';
-  const videoExamples = normalizeStringArray(body.videoExamples, 20, 300);
+  const videoExamples: { title: string; url: string }[] = Array.isArray(body.videoExamples)
+    ? body.videoExamples
+        .slice(0, 20)
+        .map((v: unknown) => {
+          if (typeof v === 'string') return { title: v, url: v };
+          if (v && typeof v === 'object' && 'url' in v) {
+            const obj = v as { title?: string; url?: string };
+            return { title: String(obj.title || obj.url || ''), url: String(obj.url || '') };
+          }
+          return null;
+        })
+        .filter((v: { title: string; url: string } | null): v is { title: string; url: string } => v !== null && !!v.url)
+    : [];
   const headlineExamples = normalizeStringArray(body.headlineExamples, 20, 200);
   const scriptExamples = normalizeStringArray(body.scriptExamples, 20, 10000);
   const viralTerms = validatedRequest.tags;
@@ -369,7 +381,7 @@ export async function POST(req: Request) {
             : scriptExamplesArray.map((s: string, i: number) => `--- Roteiro ${i + 1} ---\n${s}`).join('\n\n') || 'Nenhum roteiro fornecido';
 
           const videoText = videoExamples.length > 0
-            ? videoExamples.map((v: string, i: number) => `${i + 1}. ${v}`).join('\n')
+            ? videoExamples.map((v, i) => `${i + 1}. ${v.title}${v.url !== v.title ? ` (${v.url})` : ''}`).join('\n')
             : 'Nenhum vídeo de referência fornecido';
 
           const prompt = PLAYBOOK_PROMPT

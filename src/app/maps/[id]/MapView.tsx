@@ -326,11 +326,14 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
 
   // ── Intro screen state (only for client-shared links) ──
   const introKey = `map_intro_seen_${mapData.id}`
-  const [showIntro, setShowIntro] = useState<boolean>(() => {
-    if (!viewOnly) return false
-    if (typeof window === "undefined") return false
-    return !sessionStorage.getItem(introKey)
-  })
+  const [showIntro, setShowIntro] = useState(false)
+
+  useEffect(() => {
+    if (viewOnly && !sessionStorage.getItem(introKey)) {
+      setShowIntro(true)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   function handleEnterMap() {
     sessionStorage.setItem(introKey, "1")
@@ -774,21 +777,30 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
                   Vídeos de Referência
                 </h2>
                 <div className="space-y-3">
-                  {mapData.video_examples.map((url, i) => (
-                    <a
-                      key={i}
-                      href={url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group flex items-center gap-3 bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] hover:border-[var(--gold)]/30 rounded-xl p-4 transition-all duration-300"
-                    >
-                      <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0">
-                        <Play className="w-4 h-4 text-purple-400" />
-                      </div>
-                      <p className="text-sm text-zinc-300 font-mono truncate flex-1">{url}</p>
-                      <ExternalLink className="w-4 h-4 text-zinc-700 group-hover:text-[var(--gold)] transition-colors shrink-0" />
-                    </a>
-                  ))}
+                  {mapData.video_examples.map((item, i) => {
+                    const videoUrl = typeof item === "string" ? item : item.url
+                    const videoTitle = typeof item === "string" ? null : item.title
+                    return (
+                      <a
+                        key={i}
+                        href={videoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group flex items-center gap-3 bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] hover:border-[var(--gold)]/30 rounded-xl p-4 transition-all duration-300"
+                      >
+                        <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0">
+                          <Play className="w-4 h-4 text-purple-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          {videoTitle && (
+                            <p className="text-sm text-zinc-200 font-medium truncate">{videoTitle}</p>
+                          )}
+                          <p className="text-[11px] text-zinc-500 font-mono truncate">{videoUrl}</p>
+                        </div>
+                        <ExternalLink className="w-4 h-4 text-zinc-700 group-hover:text-[var(--gold)] transition-colors shrink-0" />
+                      </a>
+                    )
+                  })}
                 </div>
               </section>
             )}

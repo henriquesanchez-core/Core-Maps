@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Loader2, Plus, ArrowRight, MessageSquare, Compass } from "lucide-react"
 import { TagInput } from "./TagInput"
+import { VideoInput, type VideoExample } from "./VideoInput"
 
 export function GenerationForm() {
   const [loading, setLoading] = useState(false)
@@ -13,7 +14,7 @@ export function GenerationForm() {
 
   // Tag-based states
   const [viralTerms, setViralTerms] = useState<string[]>([])
-  const [videoExamples, setVideoExamples] = useState<string[]>([])
+  const [videoExamples, setVideoExamples] = useState<VideoExample[]>([])
   const [headlineExamples, setHeadlineExamples] = useState<string[]>([])
   const [scriptExamples, setScriptExamples] = useState<string[]>([])
 
@@ -49,7 +50,7 @@ export function GenerationForm() {
     }
 
     const finalViralTerms = getFinalTags(viralTerms, "viralTerms");
-    const finalVideoExamples = getFinalTags(videoExamples, "videoExamples");
+    const finalVideoExamples = videoExamples;
     const finalHeadlineExamples = getFinalTags(headlineExamples, "headlineExamples");
     const finalScriptExamples = getFinalTags(scriptExamples, "scriptExamples");
 
@@ -210,11 +211,9 @@ export function GenerationForm() {
         )}
 
         {/* Exemplos de Vídeo */}
-        <TagInput
+        <VideoInput
           label="Exemplos de Vídeo para Modelar"
-          name="videoExamples"
-          placeholder="Cole o link do vídeo e pressione Enter..."
-          tags={videoExamples}
+          videos={videoExamples}
           onChange={setVideoExamples}
         />
 
