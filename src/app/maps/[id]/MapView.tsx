@@ -252,13 +252,13 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
   }
 
   const nucleoFieldDefs = editedProfile ? [
-    { label: "Especialidade", key: "especialidade", value: editedProfile.especialidade || "", color: "text-white" },
-    { label: "Público Alvo", key: "publico_alvo", value: editedProfile.publico_alvo || "", color: "text-white" },
-    { label: "Dor que Resolve", key: "dor_principal", value: editedProfile.dor_principal || editedProfile.dor || "", color: "text-white" },
-    { label: "Inimigo Comum", key: "inimigo", value: editedProfile.inimigo || "", color: "text-red-400" },
-    { label: "Solução", key: "solucao", value: editedProfile.solucao || "", color: "text-emerald-400" },
-    { label: "Desejo / Transformação", key: "desejo", value: editedProfile.desejo || "", color: "text-emerald-400" },
-    { label: "Nova Crença", key: "nova_crenca", value: editedProfile.nova_crenca || "", color: "text-[var(--gold-light)]" },
+    { label: "Especialidade", key: "especialidade", value: editedProfile.especialidade || "", color: "text-white", multiline: false },
+    { label: "Público Alvo", key: "publico_alvo", value: editedProfile.publico_alvo || "", color: "text-white", multiline: false },
+    { label: "Dor que Resolve", key: "dor_principal", value: editedProfile.dor_principal || editedProfile.dor || "", color: "text-white", multiline: true },
+    { label: "Inimigo Comum", key: "inimigo", value: editedProfile.inimigo || "", color: "text-red-400", multiline: true },
+    { label: "Solução", key: "solucao", value: editedProfile.solucao || "", color: "text-emerald-400", multiline: true },
+    { label: "Desejo / Transformação", key: "desejo", value: editedProfile.desejo || "", color: "text-emerald-400", multiline: true },
+    { label: "Nova Crença", key: "nova_crenca", value: editedProfile.nova_crenca || "", color: "text-[var(--gold-light)]", multiline: true },
   ] : []
 
   const nucleoAudio = tabAudios[TAB_IDS.nucleo]
@@ -495,6 +495,7 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
                               value={field.value || ""}
                               onChange={(val) => updateProfileField(field.key, val)}
                               className={`text-[15px] leading-relaxed font-medium ${field.color}`}
+                              multiline={field.multiline}
                             />
                           )}
                         </div>
