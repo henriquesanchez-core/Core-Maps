@@ -80,8 +80,10 @@ export async function PATCH(
   const { data, error } = await query.select('*');
 
   if (error) {
-    console.error('[API] Update error:', error);
-    return NextResponse.json({ error: 'Failed to update map' }, { status: 500 });
+    console.error('[API] Update error:', JSON.stringify(error));
+    console.error('[API] Update payload keys:', Object.keys(updatePayload));
+    console.error('[API] extracted_profile type:', typeof updatePayload.extracted_profile);
+    return NextResponse.json({ error: 'Failed to update map', details: error.message, code: error.code }, { status: 500 });
   }
 
   if (!data || data.length === 0) {
