@@ -43,15 +43,25 @@ export function GenerationForm() {
     setErrorMsg(null)
 
     const formData = new FormData(e.currentTarget)
+    const getFinalTags = (stateTags: string[], name: string) => {
+      const inputVal = formData.get(`${name}_input`)?.toString().trim();
+      return inputVal && !stateTags.includes(inputVal) ? [...stateTags, inputVal] : stateTags;
+    }
+
+    const finalViralTerms = getFinalTags(viralTerms, "viralTerms");
+    const finalVideoExamples = getFinalTags(videoExamples, "videoExamples");
+    const finalHeadlineExamples = getFinalTags(headlineExamples, "headlineExamples");
+    const finalScriptExamples = getFinalTags(scriptExamples, "scriptExamples");
+
     const payload = {
-      tags: viralTerms,
+      tags: finalViralTerms,
       clientUsername: formData.get("clientUsername"),
       referenceProfiles: formData.get("referenceProfiles"),
       transcription: formData.get("transcription"),
-      viralTerms,
-      videoExamples,
-      headlineExamples,
-      scriptExamples,
+      viralTerms: finalViralTerms,
+      videoExamples: finalVideoExamples,
+      headlineExamples: finalHeadlineExamples,
+      scriptExamples: finalScriptExamples,
     }
 
     try {
@@ -158,6 +168,7 @@ export function GenerationForm() {
         {/* Termos Virais - tag input */}
         <TagInput
           label="Termos Virais"
+          name="viralTerms"
           placeholder="Digite um termo e pressione Enter..."
           tags={viralTerms}
           onChange={setViralTerms}
@@ -169,6 +180,7 @@ export function GenerationForm() {
         {/* Exemplos de Vídeo */}
         <TagInput
           label="Exemplos de Vídeo para Modelar"
+          name="videoExamples"
           placeholder="Cole o link do vídeo e pressione Enter..."
           tags={videoExamples}
           onChange={setVideoExamples}
@@ -177,6 +189,7 @@ export function GenerationForm() {
         {/* Headlines */}
         <TagInput
           label="Exemplos de Headline para Modelar"
+          name="headlineExamples"
           placeholder="Digite a headline e pressione Enter..."
           tags={headlineExamples}
           onChange={setHeadlineExamples}
@@ -186,6 +199,7 @@ export function GenerationForm() {
         {/* Roteiros */}
         <TagInput
           label="Exemplos de Roteiro para Modelar"
+          name="scriptExamples"
           placeholder="Descreva a estrutura do roteiro e clique +"
           tags={scriptExamples}
           onChange={setScriptExamples}

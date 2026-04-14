@@ -10,9 +10,10 @@ interface TagInputProps {
   onChange: (tags: string[]) => void
   minItems?: number
   multiline?: boolean
+  name?: string
 }
 
-export function TagInput({ label, placeholder, tags, onChange, minItems, multiline = false }: TagInputProps) {
+export function TagInput({ label, placeholder, tags, onChange, minItems, multiline = false, name }: TagInputProps) {
   const [input, setInput] = useState("")
 
   function addTag() {
@@ -68,6 +69,7 @@ export function TagInput({ label, placeholder, tags, onChange, minItems, multili
       <div className="flex gap-2">
         {multiline ? (
           <textarea
+            name={name ? `${name}_input` : undefined}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={placeholder}
@@ -77,6 +79,7 @@ export function TagInput({ label, placeholder, tags, onChange, minItems, multili
         ) : (
           <input
             type="text"
+            name={name ? `${name}_input` : undefined}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}

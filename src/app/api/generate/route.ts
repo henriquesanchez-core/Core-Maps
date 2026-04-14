@@ -183,7 +183,7 @@ export async function POST(req: Request) {
   const transcription = typeof body.transcription === 'string' ? body.transcription.slice(0, 30000) : '';
   const videoExamples = normalizeStringArray(body.videoExamples, 20, 300);
   const headlineExamples = normalizeStringArray(body.headlineExamples, 20, 200);
-  const scriptExamples = normalizeStringArray(body.scriptExamples, 20, 1200);
+  const scriptExamples = normalizeStringArray(body.scriptExamples, 20, 10000);
   const viralTerms = validatedRequest.tags;
 
   if (!clientUsername) {
@@ -305,13 +305,16 @@ export async function POST(req: Request) {
               actionPlan = JSON.parse(cleaned);
               if (actionPlan && typeof actionPlan === 'object') {
                 actionPlan.script_rewrites = normalizeScriptRewrites((actionPlan as any).script_rewrites);
+                if (actionPlan.script_rewrites.length === 0 && scriptExamplesArray.length > 0) {
+                  actionPlan.script_rewrites = scriptExamplesArray;
+                }
               }
             } catch {
               console.error('[Generate] Failed to parse headline examples:', cleaned.slice(0, 300));
               actionPlan = {
                 headline_examples: headlineExamplesArray.map((h: string) => ({ structure: h, filled_example: '' })),
                 viral_term_examples: viralTermsArray.map((t: string) => ({ viral_term: t, headline_example: '' })),
-                script_rewrites: [],
+                script_rewrites: scriptExamplesArray,
               };
             }
           }

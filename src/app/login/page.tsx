@@ -3,6 +3,14 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 
+function getSafeNextPath(rawNext: string | null): string {
+  if (!rawNext) return "/"
+  if (!rawNext.startsWith("/")) return "/"
+  if (rawNext.startsWith("//")) return "/"
+  if (rawNext.startsWith("/login")) return "/"
+  return rawNext
+}
+
 export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState("")
@@ -28,7 +36,10 @@ export default function LoginPage() {
         return
       }
 
-      router.push("/")
+      const search = typeof window !== "undefined" ? window.location.search : ""
+      const nextFromUrl = new URLSearchParams(search).get("next")
+      const nextPath = getSafeNextPath(nextFromUrl)
+      router.push(nextPath)
       router.refresh()
     } catch {
       setError("Erro ao conectar. Tente novamente.")
