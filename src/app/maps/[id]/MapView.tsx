@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import {
   ArrowLeft, ArrowRight, User, Flame, ExternalLink, Play, Type, FileText,
-  Save, Loader2, CalendarDays, Target,
+  Save, Loader2, CalendarDays, Target, Copy,
   Users, Sparkles, Share2, Check,
 } from "lucide-react"
 import ReactMarkdown from "react-markdown"
@@ -534,6 +534,17 @@ export function MapView({ mapData, tabAudios = {}, speakerImage }: { mapData: Ma
               <p className="text-[11px] text-zinc-500 font-mono">@{mapData.client_username}</p>
             </div>
           </div>
+
+          {!viewOnly && (
+            <Link
+              href={`/?from=${mapData.id}`}
+              className="flex items-center gap-1.5 text-zinc-500 hover:text-purple-400 transition-colors shrink-0 no-print cursor-pointer"
+              title="Modelar a partir deste mapa"
+            >
+              <Copy className="w-4 h-4" />
+              <span className="text-xs hidden sm:inline">Modelar</span>
+            </Link>
+          )}
 
           {!viewOnly && (
             <button

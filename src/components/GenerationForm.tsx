@@ -5,7 +5,19 @@ import { Loader2, Plus, ArrowRight, MessageSquare, Compass } from "lucide-react"
 import { TagInput } from "./TagInput"
 import { VideoInput, type VideoExample } from "./VideoInput"
 
-export function GenerationForm() {
+export interface FormInitialValues {
+  clientUsername?: string
+  referenceProfiles?: string
+  transcription?: string
+  analystDirection?: string
+  viralTerms?: string[]
+  videoExamples?: VideoExample[]
+  headlineExamples?: string[]
+  scriptExamples?: string[]
+}
+
+export function GenerationForm({ initialValues }: { initialValues?: FormInitialValues } = {}) {
+  const iv = initialValues
   const [loading, setLoading] = useState(false)
   const [progressMsg, setProgressMsg] = useState("")
   const [currentStep, setCurrentStep] = useState(0)
@@ -13,10 +25,10 @@ export function GenerationForm() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   // Tag-based states
-  const [viralTerms, setViralTerms] = useState<string[]>([])
-  const [videoExamples, setVideoExamples] = useState<VideoExample[]>([])
-  const [headlineExamples, setHeadlineExamples] = useState<string[]>([])
-  const [scriptExamples, setScriptExamples] = useState<string[]>([])
+  const [viralTerms, setViralTerms] = useState<string[]>(iv?.viralTerms ?? [])
+  const [videoExamples, setVideoExamples] = useState<VideoExample[]>(iv?.videoExamples ?? [])
+  const [headlineExamples, setHeadlineExamples] = useState<string[]>(iv?.headlineExamples ?? [])
+  const [scriptExamples, setScriptExamples] = useState<string[]>(iv?.scriptExamples ?? [])
 
   const hasAtLeastOneTag = viralTerms.length > 0
   const canSubmit = !loading && hasAtLeastOneTag
@@ -128,6 +140,13 @@ export function GenerationForm() {
         Novo CoreMap
       </h2>
 
+      {iv && (
+        <div className="mb-6 p-3 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-300 text-sm flex items-center gap-2">
+          <Compass className="w-4 h-4 shrink-0" />
+          Modelando a partir de um mapa existente. Edite os campos antes de gerar.
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-2">
           <label className="text-sm font-medium text-zinc-400">@ do Instagram do Cliente</label>
@@ -135,6 +154,7 @@ export function GenerationForm() {
             required
             name="clientUsername"
             type="text"
+            defaultValue={iv?.clientUsername ?? ""}
             placeholder="ex: htsanchez"
             className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-mono"
           />
@@ -146,6 +166,7 @@ export function GenerationForm() {
           <textarea
             name="referenceProfiles"
             rows={3}
+            defaultValue={iv?.referenceProfiles ?? ""}
             placeholder="https://instagram.com/ref1..."
             className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
           />
@@ -168,6 +189,7 @@ export function GenerationForm() {
               <textarea
                 name="transcription"
                 rows={6}
+                defaultValue={iv?.transcription ?? ""}
                 placeholder="Cole aqui a transcrição da chamada para a extração do núcleo de influência..."
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all resize-y text-sm"
               />
@@ -183,6 +205,7 @@ export function GenerationForm() {
               <textarea
                 name="analystDirection"
                 rows={3}
+                defaultValue={iv?.analystDirection ?? ""}
                 placeholder="Ex: Focar no ângulo do inimigo — o algoritmo que pune os bons profissionais. Priorizar a indignão filosófica..."
                 className="w-full bg-zinc-950 border border-amber-800/30 rounded-lg p-3 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all resize-y text-sm placeholder:text-zinc-600"
               />

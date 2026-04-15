@@ -2,8 +2,9 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import {
-  Map, Zap, Trash2, Pencil, Check, X,
+  Map, Zap, Trash2, Pencil, Check, X, Copy,
   FolderPlus, Folder, FolderOpen, MoreVertical, GripVertical,
 } from "lucide-react"
 
@@ -22,6 +23,7 @@ interface FolderItem {
 }
 
 export function MapSidebar({ initialMaps, initialFolders }: { initialMaps: MapItem[]; initialFolders: FolderItem[] }) {
+  const router = useRouter()
   const [maps, setMaps] = useState(initialMaps)
   const [folders, setFolders] = useState(initialFolders)
   const [editingMapId, setEditingMapId] = useState<string | null>(null)
@@ -180,6 +182,12 @@ export function MapSidebar({ initialMaps, initialFolders }: { initialMaps: MapIt
                       className="w-full text-left px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800 flex items-center gap-2 cursor-pointer"
                     >
                       <Pencil className="w-3.5 h-3.5" /> Renomear
+                    </button>
+                    <button
+                      onClick={() => { router.push(`/?from=${m.id}`); setMenuOpenId(null) }}
+                      className="w-full text-left px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800 flex items-center gap-2 cursor-pointer"
+                    >
+                      <Copy className="w-3.5 h-3.5" /> Modelar
                     </button>
 
                     {folders.length > 0 && (

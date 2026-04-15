@@ -1,12 +1,27 @@
 import { supabasePublic } from "@/lib/supabase"
-import { GenerationForm } from "@/components/GenerationForm"
+import { GenerationForm, type FormInitialValues } from "@/components/GenerationForm"
 import { MapSidebar } from "@/components/MapSidebar"
 import { Settings } from "lucide-react"
 import Link from "next/link"
 
 export const revalidate = 0;
 
-export default async function Home() {
+function safeJsonParse(value: unknown): any {
+  if (!value) return null
+  if (typeof value === 'object') return value
+  if (typeof value !== 'string') return null
+  try { return JSON.parse(value) } catch { return null }
+}
+
+function toStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  return value.filter((v): v is string => typeof v === 'string')
+}
+
+export default async function Home({ searchParams }: { searchParams: Promise<{ from?: string }> }) {
+  const params = await searchParams
+  const fromMapId = params.from
+
   const [{ data: maps }, { data: folders }] = await Promise.all([
     supabasePublic
       .from('maps')
@@ -18,6 +33,40 @@ export default async function Home() {
       .select('*')
       .order('created_at', { ascending: true }),
   ])
+
+  // Build initialValues if duplicating from an existing map
+  let initialValues: FormInitialValues | undefined
+  if (fromMapId) {
+    const { data: sourceMap } = await supabasePublic
+      .from('maps')
+      .select('client_username, reference_profiles, transcription, analyst_direction, viral_term, viral_format')
+      .eq('id', fromMapId)
+      .maybeSingle()
+
+    if (sourceMap) {
+      const viralTerms = toStringArray(safeJsonParse(sourceMap.viral_term))
+      const viralFormat = safeJsonParse(sourceMap.viral_format)
+
+      const videoExamples = Array.isArray(viralFormat?.videoExamples)
+        ? viralFormat.videoExamples.map((v: any) => {
+            if (typeof v === 'string') return { title: v, url: v }
+            if (v && typeof v === 'object' && v.url) return { title: v.title || v.url, url: v.url }
+            return null
+          }).filter(Boolean)
+        : []
+
+      initialValues = {
+        clientUsername: sourceMap.client_username || "",
+        referenceProfiles: sourceMap.reference_profiles || "",
+        transcription: sourceMap.transcription || "",
+        analystDirection: sourceMap.analyst_direction || "",
+        viralTerms,
+        videoExamples,
+        headlineExamples: toStringArray(viralFormat?.headlineExamples),
+        scriptExamples: toStringArray(viralFormat?.scriptExamples),
+      }
+    }
+  }
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-200 p-4 md:p-8 font-sans selection:bg-purple-500/30">
@@ -41,7 +90,7 @@ export default async function Home() {
             </Link>
           </div>
 
-          <GenerationForm />
+          <GenerationForm initialValues={initialValues} />
         </div>
 
         {/* Sidebar */}
