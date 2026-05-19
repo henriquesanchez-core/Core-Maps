@@ -90,8 +90,20 @@ export function GenerationForm({ initialValues }: { initialValues?: FormInitialV
           window.location.href = '/login'
           return
         }
-        const errorPayload = await response.json().catch(() => null) as { error?: string } | null
-        throw new Error(errorPayload?.error || `Falha na requisição (${response.status})`)
+        const errorPayload = await response.json().catch(() => null) as {
+          error?: string;
+          details?: { fieldErrors?: Record<string, string[] | undefined>; formErrors?: string[] }
+        } | null
+        const fieldErrors = errorPayload?.details?.fieldErrors
+        const firstFieldMsg = fieldErrors
+          ? Object.entries(fieldErrors)
+              .find(([, msgs]) => Array.isArray(msgs) && msgs.length > 0)
+              ?.[1]?.[0]
+          : undefined
+        const message = firstFieldMsg
+          ? `${errorPayload?.error || 'Validação falhou'} — ${firstFieldMsg}`
+          : errorPayload?.error || `Falha na requisição (${response.status})`
+        throw new Error(message)
       }
 
       if (!response.body) throw new Error("No response body")

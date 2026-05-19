@@ -3,7 +3,7 @@ import { ALL_TAB_IDS, MAX_AUDIO_UPLOAD_BYTES } from '@/lib/constants'
 
 export const GenerateRequestSchema = z.object({
   tags: z
-    .array(z.string().trim().min(1).max(50))
+    .array(z.string().trim().min(1).max(200))
     .min(1)
     .max(20),
 }).passthrough()

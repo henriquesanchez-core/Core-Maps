@@ -4,11 +4,11 @@ export const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 })
 
-async function callClaudeOnce(prompt: string, signal?: AbortSignal): Promise<string> {
+async function callClaudeOnce(prompt: string, signal?: AbortSignal, maxTokens = 4096): Promise<string> {
   const message = await anthropic.messages.create(
     {
       model: 'claude-sonnet-4-6',
-      max_tokens: 4096,
+      max_tokens: maxTokens,
       messages: [{ role: 'user', content: prompt }],
     },
     { signal, timeout: 240_000 },
@@ -18,11 +18,11 @@ async function callClaudeOnce(prompt: string, signal?: AbortSignal): Promise<str
   return content.text
 }
 
-export async function callClaude(prompt: string, signal?: AbortSignal): Promise<string> {
+export async function callClaude(prompt: string, signal?: AbortSignal, maxTokens = 4096): Promise<string> {
   const backoffs = [1000, 2000]
   for (let attempt = 0; attempt <= 2; attempt++) {
     try {
-      return await callClaudeOnce(prompt, signal)
+      return await callClaudeOnce(prompt, signal, maxTokens)
     } catch (err: any) {
       const status: number = err?.status ?? 0
       const retryable = status === 429 || (status >= 500 && status < 600)
@@ -296,10 +296,28 @@ Termos Virais:
 
 ---
 
-PARTE 3: ANÁLISE DE ESTRUTURA INVISÍVEL DO ROTEIRO (MÉTODO AUDIENCE)
-Você receberá roteiros virais já validados, que podem ser de nichos diferentes do mentorado. Para cada roteiro, analise a ESTRUTURA INVISÍVEL COMPLETA usando a taxonomia do Método Audience criado por Elias Maman.
+Retorne APENAS um JSON válido, sem markdown, sem texto adicional, neste formato exato:
 
-TAXONOMIA DO MÉTODO AUDIENCE — ELEMENTOS QUE PODEM APARECER:
+{
+  "headline_examples": [
+    { "structure": "a estrutura original exata", "filled_example": "o exemplo preenchido" }
+  ],
+  "viral_term_examples": [
+    { "viral_term": "o termo viral exato", "headline_example": "a headline criada" }
+  ]
+}`;
+
+export const SCRIPT_ANALYSIS_PROMPT = `Você é um estrategista sênior do "Método Audience" criado por Elias Maman (aula DIA 3 NOITE 2). Sua missão é dissecar a ESTRUTURA INVISÍVEL de roteiros virais — não para copiar, mas para revelar a engenharia por trás, e entregar um molde que o mentorado possa usar no nicho dele.
+
+PERFIL DO MENTORADO:
+{{NUCLEO_INFLUENCIA}}
+
+ROTEIROS TRANSCRITOS PARA ANÁLISE:
+{{SCRIPTS}}
+
+---
+
+TAXONOMIA DO MÉTODO AUDIENCE — ELEMENTOS QUE PODEM APARECER NUM ROTEIRO:
 
 • Headline — frase de abertura que captura atenção em 0-3 segundos
   Subtipos: Promessa Direta, Contraintuitiva, Número + Benefício, Pergunta Retórica, Afirmação Polêmica, Identificação Direta
@@ -329,8 +347,7 @@ TAXONOMIA DO MÉTODO AUDIENCE — ELEMENTOS QUE PODEM APARECER:
   - Valor Prático - Comparativo: X vs Y ou antes e depois
   - Valor Prático - Lista com Argumentação: cada item tem justificativa
 
-• Ponto de Identificação — frase que faz o público dizer "isso sou eu"
-  Conecta com a dor, situação ou desejo do público de forma específica e visceral
+• Ponto de Identificação — frase que faz o público dizer "isso sou eu". Conecta com a dor, situação ou desejo do público de forma específica e visceral
 
 • Prova Social — evidência de resultado ou autoridade
   Subtipos:
@@ -347,40 +364,38 @@ TAXONOMIA DO MÉTODO AUDIENCE — ELEMENTOS QUE PODEM APARECER:
 
 • Storytelling — narrativa pessoal ou de terceiro que gera emoção e identificação
 
-• Conector de Narrativa — ponte entre o conteúdo e o posicionamento do criador
-  Ex: "E você precisa entender o seguinte...", "A verdade que ninguém te conta é que..."
+• Conector de Narrativa — ponte entre o conteúdo e o posicionamento do criador. Ex: "E você precisa entender o seguinte...", "A verdade que ninguém te conta é que..."
 
-• Crença Central — a ideia/filosofia que o criador defende e quer plantar no público
+• Apresentação Magnética — como o criador se apresenta e convida ao follow no final (seguindo DIA 3 NOITE 2: Direta+Benefícios, Empatia+Dor, ou Indignação Filosófica)
 
-• Apresentação Magnética — como o criador se apresenta e convida ao follow no final
+---
 
-INSTRUÇÕES DE ANÁLISE:
-1. Leia o roteiro inteiro antes de analisar
-2. Identifique TODOS os elementos presentes — não force elementos que não existem, mas não pule nenhum que exista
-3. Para elementos com subtipo, use o nome composto (ex: "Intensificador de Mistério", "Valor Prático - Lista Numerada")
-4. Em "structure": descreva o PRINCÍPIO INVISÍVEL e a engenharia da frase, de forma abstrata e transferível para qualquer nicho
-5. Em "modeled_example": escreva um exemplo concreto e pronto para uso, já adaptado ao nicho do mentorado
-6. Mantenha a ORDEM dos elementos como aparecem no roteiro original
+REGRAS CRÍTICAS — LEIA COM ATENÇÃO:
 
-Roteiros:
-{{SCRIPT_STRUCTURES}}
+1. NUNCA copie, parafraseie ou reescreva trechos literais do roteiro original. O roteiro é MATÉRIA-PRIMA, não conteúdo final.
+2. Leia cada roteiro INTEIRO antes de começar a segmentar. Identifique a engenharia por trás de cada movimento.
+3. Segmente o roteiro em TODOS os elementos do Método Audience que ele contém, na ORDEM exata em que aparecem.
+4. Para cada elemento, preencha:
+   - "element_type": nome do elemento na taxonomia acima, com subtipo quando aplicável (ex: "Intensificador de Mistério", "Valor Prático - Lista Numerada")
+   - "structure": o PRINCÍPIO INVISÍVEL e a engenharia da frase — abstrato, transferível, um molde em linguagem de template (ex: "Afirmação contraintuitiva que contradiz a crença limitante do público sobre [X], seguida de uma promessa de resultado oposta ao que ele espera"). NÃO descreva o que o roteiro disse; descreva o mecanismo.
+   - "modeled_example": um exemplo CONCRETO criado do zero para o nicho do mentorado, aplicando a engenharia acima. Deve ser uma frase pronta para o mentorado gravar. NUNCA pode ser tradução, adaptação superficial, ou cópia disfarçada do roteiro original. Se ao ler o exemplo for possível identificar o nicho do roteiro-fonte, você errou.
+5. Se um elemento aparece mais de uma vez no roteiro, registre cada ocorrência em sequência.
+6. Siga os princípios do Método Audience (DIA 3 NOITE 2):
+   - Inimigo NUNCA pode ser a pessoa — sempre comportamento/sistema/força externa
+   - Benefícios TANGÍVEIS e DIMENSIONADOS — nunca vagos
+   - Brevidade inteligente: corte toda palavra que não agrega
+7. Se um roteiro estiver vazio, ilegível ou não couber na taxonomia, retorne "elements": [] para aquele roteiro.
 
 ---
 
 Retorne APENAS um JSON válido, sem markdown, sem texto adicional, neste formato exato:
 
 {
-  "headline_examples": [
-    { "structure": "a estrutura original exata", "filled_example": "o exemplo preenchido" }
-  ],
-  "viral_term_examples": [
-    { "viral_term": "o termo viral exato", "headline_example": "a headline criada" }
-  ],
   "script_rewrites": [
     {
       "elements": [
-        { "element_type": "Headline", "structure": "princípio invisível da frase", "modeled_example": "exemplo adaptado ao nicho do mentorado" },
-        { "element_type": "Intensificador de Mistério", "structure": "princípio invisível", "modeled_example": "exemplo adaptado" }
+        { "element_type": "Headline", "structure": "princípio invisível e engenharia da frase, em linguagem de molde", "modeled_example": "exemplo original criado para o nicho do mentorado" },
+        { "element_type": "Intensificador de Mistério", "structure": "princípio invisível", "modeled_example": "exemplo original para o nicho" }
       ]
     }
   ]
