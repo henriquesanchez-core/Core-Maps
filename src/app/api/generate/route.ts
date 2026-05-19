@@ -6,6 +6,7 @@ import {
   EXTRACT_PROFILE_PROMPT,
   NARRATIVE_PROMPT,
   HEADLINE_EXAMPLES_PROMPT,
+  SCRIPT_ANALYSIS_PROMPT,
   PLAYBOOK_PROMPT,
 } from '@/lib/claude';
 import { GenerateRequestSchema } from '@/lib/validation';
@@ -171,8 +172,14 @@ export async function POST(req: Request) {
 
   const parsedRequest = GenerateRequestSchema.safeParse(body);
   if (!parsedRequest.success) {
+    const flat = parsedRequest.error.flatten();
+    const firstFieldEntry = Object.entries(flat.fieldErrors).find(([, msgs]) => Array.isArray(msgs) && msgs.length > 0);
+    const firstFormError = flat.formErrors[0];
+    const friendly = firstFieldEntry
+      ? `Campo "${firstFieldEntry[0]}": ${firstFieldEntry[1]?.[0]}`
+      : firstFormError || 'Corpo da requisição inválido';
     return NextResponse.json(
-      { error: 'Invalid request body', details: parsedRequest.error.flatten() },
+      { error: friendly, details: flat },
       { status: 400 }
     );
   }
@@ -295,20 +302,21 @@ export async function POST(req: Request) {
           sendProgress(3, 'Ignorando transcrição (vazia)...');
         }
 
-        // STEPS 4+5: Narrativa e Exemplos IA em paralelo
+        // STEPS 4+5: Narrativa, Exemplos IA e Análise de Roteiros em paralelo
         const viralTermsArray = viralTerms;
         const headlineExamplesArray = headlineExamples;
         const scriptExamplesArray = scriptExamples;
-        const hasInputs = extractedProfile && (headlineExamplesArray.length > 0 || viralTermsArray.length > 0 || scriptExamplesArray.length > 0);
+        const hasHeadlineInputs = !!extractedProfile && (headlineExamplesArray.length > 0 || viralTermsArray.length > 0);
+        const hasScriptInputs = !!extractedProfile && scriptExamplesArray.length > 0;
 
         let narrative = '';
-        let actionPlan = null;
+        let actionPlan: any = null;
 
         if (extractedProfile) {
-          sendProgress(4, 'Gerando Narrativa e Exemplos IA em paralelo...');
+          sendProgress(4, 'Gerando Narrativa, Exemplos IA e Análise de Roteiros em paralelo...');
           const nucleoInfo = formatNucleo(extractedProfile);
 
-          const [narrativeResult, actionPlanResult] = await Promise.all([
+          const [narrativeResult, headlineResult, scriptAnalysisResult] = await Promise.all([
             // Step 4: Narrativa
             (async () => {
               const prompt = NARRATIVE_PROMPT
@@ -317,41 +325,69 @@ export async function POST(req: Request) {
                 .replace('{{ANALYST_DIRECTION}}', analystDirection || 'Sem direcionamento — use o Núcleo e a transcrição livremente');
               return callClaude(prompt, master.signal);
             })(),
-            // Step 5: Exemplos IA
-            hasInputs ? (async () => {
+            // Step 5a: Headlines preenchidas + Termos Virais
+            hasHeadlineInputs ? (async () => {
               const structuresList = headlineExamplesArray.map((h: string, i: number) => `${i + 1}. ${h}`).join('\n');
               const termsList = viralTermsArray.map((t: string, i: number) => `${i + 1}. ${t}`).join('\n');
-              const scriptsList = scriptExamplesArray.map((s: string, i: number) => `--- Roteiro ${i + 1} ---\n${s}`).join('\n\n');
               const prompt = HEADLINE_EXAMPLES_PROMPT
                 .replace('{{NUCLEO_INFLUENCIA}}', nucleoInfo)
                 .replace('{{HEADLINE_STRUCTURES}}', structuresList || 'Nenhuma estrutura fornecida')
-                .replace('{{VIRAL_TERMS}}', termsList || 'Nenhum termo viral fornecido')
-                .replace('{{SCRIPT_STRUCTURES}}', scriptsList || 'Nenhum roteiro fornecido');
+                .replace('{{VIRAL_TERMS}}', termsList || 'Nenhum termo viral fornecido');
               return callClaude(prompt, master.signal);
+            })() : Promise.resolve(null),
+            // Step 5b: Análise de estrutura invisível dos roteiros (chamada dedicada, tokens maiores)
+            hasScriptInputs ? (async () => {
+              const scriptsList = scriptExamplesArray
+                .map((s: string, i: number) => `--- Roteiro ${i + 1} ---\n${s}`)
+                .join('\n\n');
+              const prompt = SCRIPT_ANALYSIS_PROMPT
+                .replace('{{NUCLEO_INFLUENCIA}}', nucleoInfo)
+                .replace('{{SCRIPTS}}', scriptsList);
+              return callClaude(prompt, master.signal, 8192);
             })() : Promise.resolve(null),
           ]);
 
           narrative = narrativeResult;
-          sendProgress(5, 'Narrativa e Exemplos IA concluídos.');
+          sendProgress(5, 'Narrativa, Exemplos e Análise de Roteiros concluídos.');
 
-          if (hasInputs && actionPlanResult) {
-            const cleaned = actionPlanResult.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+          // Parse headlines/termos virais
+          let headlinePart: { headline_examples?: any; viral_term_examples?: any } = {};
+          if (hasHeadlineInputs && headlineResult) {
+            const cleaned = headlineResult.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
             try {
-              actionPlan = JSON.parse(cleaned);
-              if (actionPlan && typeof actionPlan === 'object') {
-                actionPlan.script_rewrites = normalizeScriptRewrites((actionPlan as any).script_rewrites);
-                if (actionPlan.script_rewrites.length === 0 && scriptExamplesArray.length > 0) {
-                  actionPlan.script_rewrites = scriptExamplesArray;
-                }
-              }
+              headlinePart = JSON.parse(cleaned);
             } catch {
               console.error('[Generate] Failed to parse headline examples:', cleaned.slice(0, 300));
-              actionPlan = {
+              headlinePart = {
                 headline_examples: headlineExamplesArray.map((h: string) => ({ structure: h, filled_example: '' })),
                 viral_term_examples: viralTermsArray.map((t: string) => ({ viral_term: t, headline_example: '' })),
-                script_rewrites: scriptExamplesArray,
               };
             }
+          }
+
+          // Parse análise de roteiros — se falhar, deixa vazio (NUNCA copia o roteiro cru)
+          let scriptPart: ScriptRewriteValue[] = [];
+          if (hasScriptInputs && scriptAnalysisResult) {
+            const cleaned = scriptAnalysisResult.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+            try {
+              const parsed = JSON.parse(cleaned);
+              if (parsed && typeof parsed === 'object') {
+                scriptPart = normalizeScriptRewrites(parsed.script_rewrites);
+              }
+            } catch {
+              console.error('[Generate] Failed to parse script analysis:', cleaned.slice(0, 300));
+            }
+            if (scriptPart.length === 0) {
+              console.warn('[Generate] Script analysis returned no structured elements — leaving script_rewrites empty.');
+            }
+          }
+
+          if (hasHeadlineInputs || hasScriptInputs) {
+            actionPlan = {
+              headline_examples: headlinePart.headline_examples ?? [],
+              viral_term_examples: headlinePart.viral_term_examples ?? [],
+              script_rewrites: scriptPart,
+            };
           }
         } else {
           sendProgress(4, 'Sem perfil extraído. Pulando narrativa.');
