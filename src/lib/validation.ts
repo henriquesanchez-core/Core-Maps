@@ -1,11 +1,11 @@
 import { z } from 'zod'
-import { ALL_TAB_IDS, MAX_AUDIO_UPLOAD_BYTES } from '@/lib/constants'
+import { ALL_TAB_IDS, LIMITS, MAX_AUDIO_UPLOAD_BYTES } from '@/lib/constants'
 
 export const GenerateRequestSchema = z.object({
   tags: z
-    .array(z.string().trim().min(1).max(200))
+    .array(z.string().trim().min(1).max(LIMITS.viralTerms.maxChars))
     .min(1)
-    .max(20),
+    .max(LIMITS.viralTerms.maxItems),
 }).passthrough()
 
 export const LoginRequestSchema = z.object({
