@@ -9,17 +9,37 @@ interface TagInputProps {
   tags: string[]
   onChange: (tags: string[]) => void
   minItems?: number
+  maxItems?: number
+  maxChars?: number
   multiline?: boolean
   name?: string
 }
 
-export function TagInput({ label, placeholder, tags, onChange, minItems, multiline = false, name }: TagInputProps) {
+export function TagInput({
+  label,
+  placeholder,
+  tags,
+  onChange,
+  minItems,
+  maxItems,
+  maxChars,
+  multiline = false,
+  name,
+}: TagInputProps) {
   const [input, setInput] = useState("")
 
+  const atMaxItems = typeof maxItems === "number" && tags.length >= maxItems
+  const overCharLimit = typeof maxChars === "number" && input.length > maxChars
+  const canAdd = !atMaxItems && !overCharLimit && input.trim().length > 0
+
   function addTag() {
+    if (atMaxItems || overCharLimit) return
     const value = input.trim()
     if (!value) return
-    if (!multiline && tags.includes(value)) { setInput(""); return }
+    if (!multiline && tags.includes(value)) {
+      setInput("")
+      return
+    }
     onChange([...tags, value])
     setInput("")
   }
@@ -35,7 +55,17 @@ export function TagInput({ label, placeholder, tags, onChange, minItems, multili
     }
   }
 
+  function handleChange(value: string) {
+    if (typeof maxChars === "number" && value.length > maxChars) {
+      setInput(value.slice(0, maxChars))
+      return
+    }
+    setInput(value)
+  }
+
   const showMinWarning = minItems && tags.length > 0 && tags.length < minItems
+  const showMaxWarning = atMaxItems
+  const showCharCount = typeof maxChars === "number" && input.length > maxChars * 0.8
 
   return (
     <div className="space-y-2">
@@ -43,6 +73,11 @@ export function TagInput({ label, placeholder, tags, onChange, minItems, multili
         {label}
         {minItems && (
           <span className="text-zinc-600 text-xs">(mín. {minItems})</span>
+        )}
+        {typeof maxItems === "number" && (
+          <span className="text-zinc-600 text-xs ml-auto">
+            {tags.length}/{maxItems}
+          </span>
         )}
       </label>
 
@@ -71,26 +106,31 @@ export function TagInput({ label, placeholder, tags, onChange, minItems, multili
           <textarea
             name={name ? `${name}_input` : undefined}
             value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder={placeholder}
+            onChange={(e) => handleChange(e.target.value)}
+            placeholder={atMaxItems ? `Limite de ${maxItems} itens atingido` : placeholder}
             rows={3}
-            className="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all resize-y text-sm"
+            maxLength={maxChars}
+            disabled={atMaxItems}
+            className="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all resize-y text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           />
         ) : (
           <input
             type="text"
             name={name ? `${name}_input` : undefined}
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => handleChange(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={placeholder}
-            className="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm"
+            placeholder={atMaxItems ? `Limite de ${maxItems} itens atingido` : placeholder}
+            maxLength={maxChars}
+            disabled={atMaxItems}
+            className="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           />
         )}
         <button
           type="button"
           onClick={addTag}
-          className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-4 rounded-lg transition-colors text-sm font-medium shrink-0 cursor-pointer"
+          disabled={!canAdd}
+          className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-4 rounded-lg transition-colors text-sm font-medium shrink-0 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
         >
           +
         </button>
@@ -99,6 +139,16 @@ export function TagInput({ label, placeholder, tags, onChange, minItems, multili
       {showMinWarning && (
         <p className="text-amber-500/80 text-xs">
           Adicione pelo menos {minItems} {minItems === 1 ? 'item' : 'itens'} ({tags.length}/{minItems})
+        </p>
+      )}
+      {showMaxWarning && (
+        <p className="text-red-400/80 text-xs">
+          Limite máximo de {maxItems} itens atingido. Remova um item para adicionar outro.
+        </p>
+      )}
+      {showCharCount && !atMaxItems && (
+        <p className="text-zinc-500 text-xs">
+          {input.length}/{maxChars} caracteres
         </p>
       )}
     </div>

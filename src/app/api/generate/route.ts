@@ -10,6 +10,7 @@ import {
   PLAYBOOK_PROMPT,
 } from '@/lib/claude';
 import { GenerateRequestSchema } from '@/lib/validation';
+import { LIMITS } from '@/lib/constants';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300; // 5 min — requer Vercel Pro
@@ -186,12 +187,12 @@ export async function POST(req: Request) {
 
   const validatedRequest = parsedRequest.data;
   const clientUsername = typeof body.clientUsername === 'string' ? body.clientUsername.trim() : '';
-  const referenceProfiles = typeof body.referenceProfiles === 'string' ? body.referenceProfiles.slice(0, 5000) : '';
-  const transcription = typeof body.transcription === 'string' ? body.transcription.slice(0, 30000) : '';
-  const analystDirection = typeof body.analystDirection === 'string' ? body.analystDirection.slice(0, 5000) : '';
+  const referenceProfiles = typeof body.referenceProfiles === 'string' ? body.referenceProfiles.slice(0, LIMITS.referenceProfiles.maxChars) : '';
+  const transcription = typeof body.transcription === 'string' ? body.transcription.slice(0, LIMITS.transcription.maxChars) : '';
+  const analystDirection = typeof body.analystDirection === 'string' ? body.analystDirection.slice(0, LIMITS.analystDirection.maxChars) : '';
   const videoExamples: { title: string; url: string }[] = Array.isArray(body.videoExamples)
     ? body.videoExamples
-        .slice(0, 20)
+        .slice(0, LIMITS.videoExamples.maxItems)
         .map((v: unknown) => {
           if (typeof v === 'string') return { title: v, url: v };
           if (v && typeof v === 'object' && 'url' in v) {
@@ -202,8 +203,8 @@ export async function POST(req: Request) {
         })
         .filter((v: { title: string; url: string } | null): v is { title: string; url: string } => v !== null && !!v.url)
     : [];
-  const headlineExamples = normalizeStringArray(body.headlineExamples, 20, 200);
-  const scriptExamples = normalizeStringArray(body.scriptExamples, 20, 10000);
+  const headlineExamples = normalizeStringArray(body.headlineExamples, LIMITS.headlineExamples.maxItems, LIMITS.headlineExamples.maxChars);
+  const scriptExamples = normalizeStringArray(body.scriptExamples, LIMITS.scriptExamples.maxItems, LIMITS.scriptExamples.maxChars);
   const viralTerms = validatedRequest.tags;
 
   if (!clientUsername) {

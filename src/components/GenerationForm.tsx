@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Loader2, Plus, ArrowRight, MessageSquare, Compass } from "lucide-react"
 import { TagInput } from "./TagInput"
 import { VideoInput, type VideoExample } from "./VideoInput"
+import { LIMITS } from "@/lib/constants"
 
 export interface FormInitialValues {
   clientUsername?: string
@@ -178,6 +179,7 @@ export function GenerationForm({ initialValues }: { initialValues?: FormInitialV
           <textarea
             name="referenceProfiles"
             rows={3}
+            maxLength={LIMITS.referenceProfiles.maxChars}
             defaultValue={iv?.referenceProfiles ?? ""}
             placeholder="https://instagram.com/ref1..."
             className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
@@ -201,6 +203,7 @@ export function GenerationForm({ initialValues }: { initialValues?: FormInitialV
               <textarea
                 name="transcription"
                 rows={6}
+                maxLength={LIMITS.transcription.maxChars}
                 defaultValue={iv?.transcription ?? ""}
                 placeholder="Cole aqui a transcrição da chamada para a extração do núcleo de influência..."
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all resize-y text-sm"
@@ -217,6 +220,7 @@ export function GenerationForm({ initialValues }: { initialValues?: FormInitialV
               <textarea
                 name="analystDirection"
                 rows={3}
+                maxLength={LIMITS.analystDirection.maxChars}
                 defaultValue={iv?.analystDirection ?? ""}
                 placeholder="Ex: Focar no ângulo do inimigo — o algoritmo que pune os bons profissionais. Priorizar a indignão filosófica..."
                 className="w-full bg-zinc-950 border border-amber-800/30 rounded-lg p-3 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all resize-y text-sm placeholder:text-zinc-600"
@@ -240,6 +244,8 @@ export function GenerationForm({ initialValues }: { initialValues?: FormInitialV
           placeholder="Digite um termo e pressione Enter..."
           tags={viralTerms}
           onChange={setViralTerms}
+          maxItems={LIMITS.viralTerms.maxItems}
+          maxChars={LIMITS.viralTerms.maxChars}
         />
         {!hasAtLeastOneTag && (
           <p className="text-xs text-red-400 -mt-4">Adicione pelo menos 1 tag em Termos Virais.</p>
@@ -260,6 +266,8 @@ export function GenerationForm({ initialValues }: { initialValues?: FormInitialV
           tags={headlineExamples}
           onChange={setHeadlineExamples}
           minItems={5}
+          maxItems={LIMITS.headlineExamples.maxItems}
+          maxChars={LIMITS.headlineExamples.maxChars}
         />
 
         {/* Roteiros */}
@@ -270,6 +278,8 @@ export function GenerationForm({ initialValues }: { initialValues?: FormInitialV
           tags={scriptExamples}
           onChange={setScriptExamples}
           minItems={2}
+          maxItems={LIMITS.scriptExamples.maxItems}
+          maxChars={LIMITS.scriptExamples.maxChars}
           multiline
         />
 
