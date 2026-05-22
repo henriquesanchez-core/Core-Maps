@@ -26,8 +26,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ f
     supabasePublic
       .from('maps')
       .select('id, client_username, name, folder_id, created_at')
+      .is('deleted_at', null)
       .order('created_at', { ascending: false })
-      .limit(50),
+      .limit(1000),
     supabasePublic
       .from('folders')
       .select('*')

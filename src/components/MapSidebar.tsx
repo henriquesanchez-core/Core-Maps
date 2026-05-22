@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
   Map, Zap, Trash2, Pencil, Check, X, Copy,
-  FolderPlus, Folder, FolderOpen, MoreVertical, GripVertical,
+  FolderPlus, Folder, FolderOpen, MoreVertical, GripVertical, Search,
 } from "lucide-react"
 
 interface MapItem {
@@ -33,6 +33,7 @@ export function MapSidebar({ initialMaps, initialFolders }: { initialMaps: MapIt
   const [newFolderName, setNewFolderName] = useState("")
   const [showNewFolder, setShowNewFolder] = useState(false)
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(folders.map(f => f.id)))
+  const [search, setSearch] = useState("")
 
   function toggleFolder(folderId: string) {
     setExpandedFolders(prev => {
@@ -125,6 +126,14 @@ export function MapSidebar({ initialMaps, initialFolders }: { initialMaps: MapIt
   // ── Render helpers ──
 
   const unfolderedMaps = maps.filter(m => !m.folder_id)
+
+  const searchQuery = search.trim().toLowerCase()
+  const searchResults = searchQuery
+    ? maps.filter(m =>
+        (m.name || "").toLowerCase().includes(searchQuery) ||
+        m.client_username.toLowerCase().includes(searchQuery)
+      )
+    : []
 
   function renderMapCard(m: MapItem) {
     const displayName = m.name || `@${m.client_username}`
@@ -309,6 +318,7 @@ export function MapSidebar({ initialMaps, initialFolders }: { initialMaps: MapIt
         <h3 className="text-lg font-semibold flex items-center gap-2 text-zinc-100">
           <Zap className="w-5 h-5 text-yellow-500" />
           Mapas
+          <span className="text-xs font-normal text-zinc-600">({maps.length})</span>
         </h3>
         <button
           onClick={() => setShowNewFolder(true)}
@@ -317,6 +327,22 @@ export function MapSidebar({ initialMaps, initialFolders }: { initialMaps: MapIt
         >
           <FolderPlus className="w-4 h-4" />
         </button>
+      </div>
+
+      {/* Busca */}
+      <div className="mb-3 flex items-center gap-2 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 focus-within:border-blue-500/40 transition-colors">
+        <Search className="w-4 h-4 text-zinc-600 shrink-0" />
+        <input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Buscar por nome ou @..."
+          className="flex-1 min-w-0 bg-transparent text-sm text-zinc-100 focus:outline-none placeholder:text-zinc-600"
+        />
+        {search && (
+          <button onClick={() => setSearch("")} className="text-zinc-600 hover:text-zinc-300 cursor-pointer shrink-0">
+            <X className="w-3.5 h-3.5" />
+          </button>
+        )}
       </div>
 
       {showNewFolder && (
@@ -335,22 +361,35 @@ export function MapSidebar({ initialMaps, initialFolders }: { initialMaps: MapIt
         </div>
       )}
 
-      <div className="space-y-2">
-        {/* Folders */}
-        {folders.map(renderFolderCard)}
+      {searchQuery ? (
+        /* Resultados da busca — lista plana, ignora pastas */
+        <div className="space-y-2">
+          <p className="text-[11px] text-zinc-600 px-1">
+            {searchResults.length} {searchResults.length === 1 ? 'resultado' : 'resultados'} para “{search.trim()}”
+          </p>
+          {searchResults.map(renderMapCard)}
+          {searchResults.length === 0 && (
+            <p className="text-sm text-zinc-500 text-center py-4">Nenhum mapa encontrado.</p>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {/* Folders */}
+          {folders.map(renderFolderCard)}
 
-        {/* Separator if there are both folders and unfoldered maps */}
-        {folders.length > 0 && unfolderedMaps.length > 0 && (
-          <div className="border-t border-zinc-800 my-2" />
-        )}
+          {/* Separator if there are both folders and unfoldered maps */}
+          {folders.length > 0 && unfolderedMaps.length > 0 && (
+            <div className="border-t border-zinc-800 my-2" />
+          )}
 
-        {/* Unfoldered maps */}
-        {unfolderedMaps.map(renderMapCard)}
+          {/* Unfoldered maps */}
+          {unfolderedMaps.map(renderMapCard)}
 
-        {maps.length === 0 && (
-          <p className="text-sm text-zinc-500 text-center py-4">Nenhum mapa gerado ainda.</p>
-        )}
-      </div>
+          {maps.length === 0 && (
+            <p className="text-sm text-zinc-500 text-center py-4">Nenhum mapa gerado ainda.</p>
+          )}
+        </div>
+      )}
     </div>
   )
 }
