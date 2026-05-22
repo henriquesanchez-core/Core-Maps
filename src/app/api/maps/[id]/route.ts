@@ -7,14 +7,22 @@ export async function DELETE(
 ) {
   const { id } = await params;
 
-  const { error } = await supabaseAdmin
+  // Soft delete: marca deleted_at em vez de remover a linha.
+  // A listagem filtra deleted_at is null, e o mapa fica recuperável.
+  const { data, error } = await supabaseAdmin
     .from('maps')
-    .delete()
-    .eq('id', id);
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', id)
+    .is('deleted_at', null)
+    .select('id');
 
   if (error) {
     console.error('[API] Delete error:', JSON.stringify(error));
     return NextResponse.json({ error: 'Failed to delete map' }, { status: 500 });
+  }
+
+  if (!data || data.length === 0) {
+    return NextResponse.json({ error: 'Map not found' }, { status: 404 });
   }
 
   return NextResponse.json({ success: true });
