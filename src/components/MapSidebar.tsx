@@ -32,7 +32,8 @@ export function MapSidebar({ initialMaps, initialFolders }: { initialMaps: MapIt
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null)
   const [newFolderName, setNewFolderName] = useState("")
   const [showNewFolder, setShowNewFolder] = useState(false)
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(folders.map(f => f.id)))
+  // Pastas iniciam fechadas — o usuário expande as que quiser.
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set())
   const [search, setSearch] = useState("")
 
   function toggleFolder(folderId: string) {
